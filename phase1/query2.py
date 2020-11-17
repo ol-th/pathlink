@@ -10,8 +10,7 @@ def main():
     r = requests.get(url)
     if r.status_code != 200:
         return 1
-    # print(r.headers['content-type'])
-    # print(r.text)
+
     try:
         xml_root = ET.fromstring(r.text)
     except Exception as e:
@@ -19,9 +18,13 @@ def main():
         print(e)
         return 1
 
-    uniprot_id = xml_root[0][0].text # First identifier available for best result
+    uniprot_id = xml_root[0][0].text # Identifier for highest search result
 
-    ######## KEGG SEARCH ####################
+    ######### PATHWAY COMMONS SEARCH #############
+
+
+
+    ############# KEGG SEARCH ####################
 
     r = requests.get("http://rest.kegg.jp/conv/genes/uniprot:" + uniprot_id)
     if r.status_code != 200:
