@@ -1,0 +1,14 @@
+biopython==1.78
+certifi==2020.12.5
+chardet==3.0.4
+idna==2.10
+isodate==0.6.0
+neo4j==4.2.0
+numpy==1.19.4
+pyparsing==2.4.7
+pytz==2020.4
+rdflib==5.0.0
+requests==2.25.0
+six==1.15.0
+SPARQLWrapper==1.8.5
+urllib3==1.26.2

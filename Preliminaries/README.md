@@ -1,5 +1,14 @@
 # Preliminaries
 
+## Dependencies
+
+To get all the dependencies for this project run 
+
+```
+pip install -r requirements.txt
+```
+
+In this directory (`/Preliminaries`)
 ## Pathway_participation
 
 This module is for establishing a Protein's participation in a certain named pathway.
