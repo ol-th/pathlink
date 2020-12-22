@@ -32,21 +32,29 @@ def main():
 
     pathway_kgml = KEGG_REST.kegg_get(identifier, "kgml")
     pathway = KEGG_KGML_PARSER.read(pathway_kgml)
-    print(pathway.compounds[0].name)
-    print(pathway.compounds[0].components)
-    # config = configparser.ConfigParser()
-    # config.read("server_config")
-    # if not "KGML2NEO4J" in config:
-    #     print("Server config not found!")
-    #     return
+    config = configparser.ConfigParser()
+    config.read("server_config")
+    if not "KGML2NEO4J" in config:
+        print("Server config not found!")
+        return
 
-    # username = config["KGML2NEO4J"]['username']
-    # password = config["KGML2NEO4J"]['password']
-    # server_uri = config["KGML2NEO4J"]['uri']
-    #
-    # db = database(server_uri, username, password)
-    #
-    # db.add_genes(pathway.genes)
+    username = config["KGML2NEO4J"]['username']
+    password = config["KGML2NEO4J"]['password']
+    server_uri = config["KGML2NEO4J"]['uri']
+
+    db = database(server_uri, username, password)
+
+    query = "CREATE "
+    query_list = [db.make_gene_query(pathway.genes), db.make_compound_query(pathway.compounds),
+                  db.make_reaction_query(pathway.reaction_entries), db.make_map_query(pathway.maps),
+                  db.make_relations_query(pathway.relations)]
+
+    for q in query_list:
+        if len(q) > 0:
+            query += q + ","
+    query = query[:-1]
+
+    db.run_query(query)
 
 
 if __name__ == "__main__":
