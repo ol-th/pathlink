@@ -48,3 +48,18 @@ e.g:
 ```
 python3 -m KGML2Neo4j.main "colorectal cancer"
 ```
+
+### Example queries on the Neo4j database
+
+The following queries are all in cypher - the query language supported by Neo4j databases.
+
+This also assumes the "colorectal cancer" example has been used to populate the database.
+
+This query will retrieve all paths including and succeeding any nodes with the name "hsa:3845".
+This node refers to the "KRAS" Gene.
+```
+MATCH path = (a)-[*]->()
+WHERE "hsa:3845" in a.name
+RETURN path
+```
+
