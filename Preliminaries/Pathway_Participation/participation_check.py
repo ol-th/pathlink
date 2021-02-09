@@ -1,7 +1,7 @@
 import sys
-from .uniprot_query import *
-from .kegg_query import *
-from .pathwaycommons_query import *
+from .uniprot_helper import *
+from .kegg_helper import *
+from .pathwaycommons_helper import *
 
 
 def main():

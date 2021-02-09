@@ -27,3 +27,14 @@ def kegg_pathway_participation(id, query):
             break
 
     return kegg_outcome
+
+def kegg_info(id):
+
+    r = requests.get("http://rest.kegg.jp/get/" + id)
+    if r.status_code != 200:
+        return None
+    if r.text == "":
+        return None
+    kegg_info = r.text.split("\n")
+
+    return kegg_info

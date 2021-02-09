@@ -11,15 +11,21 @@ pip install -r requirements.txt
 In this directory (`/Preliminaries`)
 ## Pathway_participation
 
-This module is for establishing a Protein's participation in a certain named pathway.
+This module is for establishing a Protein's participation.
 
-Invoke the module using something like this:
+Specific participation can be verified as such:
 
 ```
-python3 -m Pathway_participation.query "PARP1" "Base excision repair"
+python3 -m Pathway_participation.participation_check "PARP1" "Base excision repair"
 ```
 
 This would query the Pathway Commons and KEGG datasets to establish whether PARP1 participates in the Base excision repair pathway.
+
+A list of pathways participated in can be printed using:
+
+```
+python3 -m Pathway_participation.all_pathways "PARP1"
+```
 
 ## KGML2Neo4j
 
@@ -58,7 +64,7 @@ This also assumes the "colorectal cancer" example has been used to populate the 
 This query will retrieve all paths including and succeeding any nodes with the name "hsa:3845".
 This node refers to the "KRAS" Gene.
 ```
-MATCH path = (a)-[*]->()
+MATCH path = (a)-[*1..]->()
 WHERE "hsa:3845" in a.name
 RETURN path
 ```
