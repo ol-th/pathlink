@@ -8,10 +8,12 @@ import configparser
 ORGANISM = "hsa"
 
 
-def main():
+def generate_database(accession, verbose=False):
     # Expects name of pathway as argument
     # Get the KGML from KEGG
-    query = sys.argv[1].replace(" ", "+")
+    if verbose:
+        print("Getting initial data...")
+    query = accession.replace(" ", "+")
     result = KEGG_REST.kegg_find('PATHWAY', query)
     result_txt = result.read().split('\n')
     if len(result_txt) == 1:
@@ -30,6 +32,9 @@ def main():
     identifier = result_txt[choice].split("\t")[0].strip()
     identifier = identifier.replace("map", ORGANISM)
 
+    if verbose:
+        print("Getting pathway data...")
+
     pathway_kgml = KEGG_REST.kegg_get(identifier, "kgml")
     pathway = KEGG_KGML_PARSER.read(pathway_kgml)
     config = configparser.ConfigParser()
@@ -44,12 +49,20 @@ def main():
 
     db = database(server_uri, username, password)
 
+    if verbose:
+        print("Uploading to Neo4j...")
+
     db.run_query("MATCH (n) DETACH DELETE n")
 
+    known = {}
+
     query = "CREATE "
-    query_list = [db.make_gene_query(pathway.genes), db.make_compound_query(pathway.compounds),
-                  db.make_reaction_query(pathway.reaction_entries), db.make_map_query(pathway.maps),
-                  db.make_relations_query(pathway.relations)]
+    query_list = [db.make_gene_query(pathway.genes, known), db.make_compound_query(pathway.compounds, known),
+                  db.make_reaction_query(pathway.reaction_entries, known), db.make_map_query(pathway.maps, known)]
+
+    relations_data = db.make_relations_query(pathway.relations, known)
+    query_list.append(db.make_unknown_query(relations_data[1]))
+    query_list.append(relations_data[0])
 
     for q in query_list:
         if len(q) > 0:
@@ -66,7 +79,3 @@ def main():
                     RETURN node"""
 
     db.run_query(merge_query)
-
-
-if __name__ == "__main__":
-    main()

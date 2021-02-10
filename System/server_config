@@ -1,0 +1,4 @@
+[KGML2NEO4J]
+username = neo4j
+password = example
+uri = neo4j://localhost:7687
