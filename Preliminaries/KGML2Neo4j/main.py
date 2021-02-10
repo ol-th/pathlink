@@ -56,6 +56,13 @@ def main():
 
     db.run_query(query)
 
+    # Merge matching nodes
+    db.run_query("""MATCH (n1:name),(n2:name)
+                    WHERE ANY (x IN n1.name WHERE x IN n2.name) and id(n1) < id(n2)
+                    WITH [n1,n2] as ns
+                    CALL apoc.refactor.mergeNodes(ns) YIELD node
+                    RETURN node""")
+
 
 if __name__ == "__main__":
     main()
