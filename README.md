@@ -6,4 +6,4 @@ This is the repository containing my 3rd year project research.
 
 ### Preliminaries
 
-These are the files I'm using for my preliminary research into the Biological Pathways domain
+These are the files and programs I used for my preliminary research into the Biological Pathways domain prior to the full system design
