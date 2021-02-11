@@ -72,10 +72,18 @@ def generate_database(accession, verbose=False):
     db.run_query(query)
 
     # Merge matching nodes
-    merge_query = """MATCH (n1),(n2)
-                    WHERE ANY (x IN n1.name WHERE x IN n2.name) and id(n1) < id(n2)
-                    WITH [n1,n2] as ns
-                    CALL apoc.refactor.mergeNodes(ns) YIELD node
-                    RETURN node"""
+    merge_nodes_query = """MATCH (n1),(n2)
+                        WHERE ANY (x IN n1.name WHERE x IN n2.name) and id(n1) < id(n2)
+                        WITH [n1,n2] as ns
+                        CALL apoc.refactor.mergeNodes(ns) YIELD node
+                        RETURN node"""
 
-    db.run_query(merge_query)
+    merge_relations_query = """MATCH (a)-[r1]->(b)
+                            MATCH (a)-[r2]->(b)
+                            WHERE id(r1) < id(r2)
+                            WITH [r1,r2] as rs
+                            CALL apoc.refactor.mergeRelationships(rs) YIELD rel
+                            RETURN rel"""
+
+    db.run_query(merge_nodes_query)
+    db.run_query(merge_relations_query)
