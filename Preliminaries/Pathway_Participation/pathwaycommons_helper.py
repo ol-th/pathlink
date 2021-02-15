@@ -36,3 +36,33 @@ def pc_participation_check(id, query):
     xml_root = ET.fromstring(ret)
     # If there are results, then the gene is part of the pathway specified
     return len(xml_root[1]) > 0
+
+
+def pathway_given_pathway(name):
+    sparql = SPARQLWrapper("http://rdf.pathwaycommons.org/sparql/")
+
+    query = """
+        SELECT DISTINCT ?parentpname ?comment
+        WHERE
+        {
+            ?pathway rdf:type bp:Pathway;
+                     bp:displayName ?pname.
+            FILTER regex(?pname, \".*""" + name + """.*\", "i")
+            
+            ?pathwayParent bp:pathwayComponent ?pathway;
+                           bp:displayName ?parentpname;
+                           bp:comment ?comment.
+        }
+        LIMIT 200"""
+
+    sparql.setQuery(query)
+    sparql.setReturnFormat(XML)
+    ret = sparql.query().convert().toxml()
+    xml_root = ET.fromstring(ret)
+    output_dict = {}
+    for i in xml_root[1]:
+        pathway_name = i[0][0].text
+        if pathway_name not in output_dict.keys():
+            output_dict[pathway_name] = []
+        output_dict[pathway_name].append(i[1][0].text)
+    return output_dict

@@ -41,4 +41,3 @@ def kegg_info(id):
 
     return kegg_info
 
-# def kegg_pathway_entry(id):

@@ -1,6 +1,5 @@
 import Bio.KEGG.REST as KEGG_REST
 import Bio.KEGG.KGML.KGML_parser as KEGG_KGML_PARSER
-import sys
 from .database import database
 import configparser
 

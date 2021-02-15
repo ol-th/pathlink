@@ -1,5 +1,7 @@
 import requests
 
+# def kegg_search(query):
+#
 
 def kegg_identifier_convert(id):
     r = requests.get("http://rest.kegg.jp/conv/genes/uniprot:" + id)
@@ -38,3 +40,5 @@ def kegg_info(id):
     kegg_info = r.text.split("\n")
 
     return kegg_info
+
+# def kegg_pathway_entry(id):

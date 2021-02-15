@@ -1,3 +1,5 @@
-import KGML2Neo4j.main as KGML2Neo4j
+from Database_Tools import general, kegg_helper, uniprot_helper
 
-KGML2Neo4j.generate_database("colorectal cancer", True)
+outcome = general.pathways_given_pathway("base excision repair")
+for i in outcome:
+    print(i[0])
