@@ -1,7 +1,10 @@
 import requests
 
-# def kegg_search(query):
-#
+
+def kegg_search(query, database):
+    r = requests.get('http://rest.kegg.jp/find/' + database + '/' + query)
+    return r.text.split("\n")[:-1]
+
 
 def kegg_identifier_convert(id):
     r = requests.get("http://rest.kegg.jp/conv/genes/uniprot:" + id)
@@ -11,6 +14,7 @@ def kegg_identifier_convert(id):
         return None
 
     return r.text.split("\t")[1]
+
 
 def kegg_pathway_participation(id, query):
 
@@ -29,6 +33,7 @@ def kegg_pathway_participation(id, query):
             break
 
     return kegg_outcome
+
 
 def kegg_info(id):
 

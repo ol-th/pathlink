@@ -2,6 +2,7 @@
 from . import kegg_helper, pathwaycommons_helper, uniprot_helper
 
 
+
 def pathways_given_product(protein_name):
     protein_id = uniprot_helper.get_uniprot_identifier(protein_name)
     protein_kegg_id = kegg_helper.kegg_identifier_convert(protein_id)
