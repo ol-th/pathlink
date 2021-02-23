@@ -1,6 +1,4 @@
-
 from . import kegg_helper, pathwaycommons_helper, uniprot_helper
-
 
 
 def pathways_given_product(protein_name):

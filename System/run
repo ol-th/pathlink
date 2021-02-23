@@ -1,3 +1,4 @@
 #!/bin/bash
 export FLASK_APP=site
+export FLASK_ENV=development
 flask run
