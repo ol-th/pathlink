@@ -58,12 +58,11 @@ def kegg_info(id):
     if r.text == "":
         return None
     kegg_info = r.text.split("\n")
-
     return kegg_info
 
 
 # Returns name of genes given Biopython entry list of genes with their KEGG accession numbers (gene.name)
-def kegg_gene_link(gene_list):
+def kegg_gene_list(gene_list):
     query = ""
     for gene in gene_list:
         query += gene.name.split(" ")[0] + "+"
@@ -80,3 +79,4 @@ def kegg_gene_link(gene_list):
         full_list.append("<a href=\"" + gene_list[index].link + "\">" + line + "</a>")
 
     return full_list
+

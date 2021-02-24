@@ -123,3 +123,27 @@ def pathway_given_pathway(name):
         output.append([pathway[0], current_desc])
 
     return output
+
+
+def get_gene_name(id, limit=1):
+    sparql = SPARQLWrapper("http://rdf.pathwaycommons.org/sparql/")
+    query = """
+        PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+        SELECT DISTINCT ?proteinName
+        WHERE
+        {
+        ?protein rdf:type bp:Protein;
+                       bp:entityReference ?eref;
+                       bp:displayName ?proteinName.
+
+        FILTER regex(?eref, "^http://identifiers.org/uniprot/""" + id + """$")
+
+        }
+        LIMIT """ + str(limit)
+    sparql.setQuery(query)
+    sparql.setReturnFormat(XML)
+    ret = sparql.query().convert().toxml()
+    xml_root = ET.fromstring(ret)
+    return xml_root[1][0][0][0].text
