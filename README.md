@@ -2,6 +2,19 @@
 
 This is the repository containing my 3rd year project research.
 
+## Motivation
+
+There is a significant amount of bioinformatic data available in different formats and places.
+
+This is fine for manual use but even then it is lengthy to use the data to come to any conclusions.
+
+The purpose of this project is to provide an API and graphical interface which provides quick access to cancer-related bioinformatic data along with other data computed from:
+
+* KEGG
+* Pathway Commons
+* COSMIC
+* STRING
+
 ## Structure
 
 ### Preliminaries
