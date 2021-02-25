@@ -1,4 +1,4 @@
-from System.Database_Tools import kegg_helper, pathwaycommons_helper, general
+from System.Database_Tools import kegg_helper, pathwaycommons_helper, general, uniprot_helper
 
 
 def search(query):
@@ -68,10 +68,9 @@ def product_query(query_list):
     # This means it's a name
     if len(query) == 1:
         name = query[0]
-        results = kegg_helper.kegg_search("GENES", name)
-        if len(results) > 0:
-            # TODO: allow choice of identifier maybe
-            identifier = results[0]
+        uniprot_id = uniprot_helper.get_uniprot_identifier(name)
+        if uniprot_id is not None:
+            identifier = kegg_helper.kegg_identifier_convert(uniprot_id)
             return get_product_results(identifier, name)
     elif len(query) == 2:
         identifier = query[0] + ":" + query[1]
@@ -131,10 +130,9 @@ def pathway_product_query(pathway_query, product_query):
 
     if len(product_list) == 1:
         product_name = product_list[0]
-        results = kegg_helper.kegg_search("GENES", product_name)
-        if len(results) > 0:
-            # TODO: allow choice of identifier maybe
-            product_identifier = results[0]
+        uniprot_id = uniprot_helper.get_uniprot_identifier(product_name)
+        if uniprot_id is not None:
+            product_identifier = kegg_helper.kegg_identifier_convert(uniprot_id)
 
     elif len(product_list) == 2:
         product_identifier = product_list[0] + ":" + product_list[1]
