@@ -76,6 +76,7 @@ def kegg_gene_list(gene_list):
     result_lines = r.text.split("\n")[:-1]
     full_list = []
     for index, line in enumerate(result_lines):
+        line = " ".join(line.split(" ")[1:])
         full_list.append("<a href=\"" + gene_list[index].link + "\">" + line + "</a>")
 
     return full_list

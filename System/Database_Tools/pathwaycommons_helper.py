@@ -94,13 +94,22 @@ def pathway_given_pathway(name):
         SELECT DISTINCT ?parentpname ?comment
         WHERE
         {
+
             ?pathway rdf:type bp:Pathway;
                      bp:displayName ?pname.
-            FILTER regex(?pname, \".*""" + name + """.*\", "i")
+            FILTER regex(?pname, ".*""" + name + """.*", "i")
+
+        {
             
             ?pathwayParent bp:pathwayComponent ?pathway;
                            bp:displayName ?parentpname;
                            bp:comment ?comment.
+        }UNION{
+            ?pathway bp:controlled ?pathwayParent.
+            ?pathwayParent bp:pathwayComponent ?pathway;
+                           bp:displayName ?parentpname;
+                           bp:comment ?comment.
+        }
         }
         LIMIT 200"""
 
