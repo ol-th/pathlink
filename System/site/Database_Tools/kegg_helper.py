@@ -11,8 +11,9 @@ def kegg_search(database, query):
         return []
 
     output = []
+    # This looks horrible, but for some reason KEGG puts path: in front of results??
     for result in result_lines:
-        output.append(result.split('\t')[0])
+        output.append(result.split('\t')[0].replace("path:", ""))
     return output
 
 
@@ -23,7 +24,7 @@ def kegg_identifier_convert(id):
     if r.text == "":
         return None
 
-    return r.text.split("\t")[1]
+    return r.text.split("\t")[1].strip()
 
 
 def kegg_get_pathway(identifier):
@@ -31,23 +32,10 @@ def kegg_get_pathway(identifier):
     return KEGG_KGML_PARSER.read(pathway_kgml)
 
 
-def kegg_pathway_participation(identifier, query):
-
-    r = requests.get("http://rest.kegg.jp/get/" + identifier)
-    if r.status_code != 200:
-        return None
-    if r.text == "":
-        return None
-    kegg_info = r.text.split("\n")
-
-    kegg_outcome = False
-
-    for line in kegg_info:
-        if query in line:
-            kegg_outcome = True
-            break
-
-    return kegg_outcome
+def kegg_pathway_participation(gene_identifier, pathway_identifier):
+    pathway = kegg_get_pathway(pathway_identifier)
+    gene_names = [gene.name for gene in pathway.genes]
+    return gene_identifier in gene_names
 
 
 def kegg_info(id):
@@ -61,7 +49,8 @@ def kegg_info(id):
     return kegg_info
 
 
-# Returns name of genes given Biopython entry list of genes with their KEGG accession numbers (gene.name)
+# Returns name of genes given Biopython list of gene entries with their KEGG accession numbers (gene.name)
+# Outputs tuples pathway_id, link, name
 def kegg_gene_list(gene_list):
     query = ""
     for gene in gene_list:
@@ -76,8 +65,9 @@ def kegg_gene_list(gene_list):
     result_lines = r.text.split("\n")[:-1]
     full_list = []
     for index, line in enumerate(result_lines):
-        line = " ".join(line.split(" ")[1:])
-        full_list.append("<a href=\"" + gene_list[index].link + "\">" + line + "</a>")
+
+        name = " ".join(line.split(" ")[1:])
+        full_list.append((gene_list[index].link, name))
 
     return full_list
 

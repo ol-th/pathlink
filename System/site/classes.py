@@ -1,4 +1,4 @@
-from System.Database_Tools import uniprot_helper, kegg_helper
+from System.site.Database_Tools import uniprot_helper, kegg_helper
 
 
 # NB: name, kegg_id, functions and (maybe) uniprot_id will be None if this is unsuccessful.

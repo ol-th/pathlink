@@ -1,7 +1,10 @@
-from System.Database_Tools import kegg_helper, pathwaycommons_helper, general, uniprot_helper
+from .Database_Tools import kegg_helper, uniprot_helper, pathwaycommons_helper, general
 from .classes import Gene
+from . import api
 
 
+# First entrypoint - this handles the query syntax and sends them to respective handlers
+# example query: gene:PTEN; path: homologous recombination
 def search(query):
     query = str(query)
     query_list = [i.strip() for i in query.split(";")]
@@ -17,6 +20,9 @@ def search(query):
             return pathway_product_query(query_list[1], query_list[0])
         if query_list[0].startswith("gene") and query_list[1].startswith("gene"):
             return product_product_query(query_list[0], query_list[1])
+        # TODO: mutations query
+    else:
+        return ["Malformed query"]
 
 
 def pathway_query(query_list):
@@ -46,15 +52,16 @@ def pathway_query(query_list):
 
 
 def get_pathway_results(identifier, name):
-    pathway = kegg_helper.kegg_get_pathway(identifier)
+
+    # Keys: pathway_name, pathway_link, gene_list [link, name]
+    pathway_info = api.get_pathway_info(identifier)
 
     # Adding the pathway link
-    output_list = ["<a href=\"" + pathway.link + "\"><h2>KEGG entry for pathway</h2></a>"]
+    output_list = ["<a href=\"" + pathway_info["pathway_link"] + "\"><h2>KEGG entry for pathway</h2></a>"]
     # Adding a list of genes involved
-    gene_list = kegg_helper.kegg_gene_list(pathway.genes)
     gene_list_text = "<p><h2>Gene participants:</h2></p>"
-    for gene in gene_list:
-        gene_list_text += "<p>" + gene + "</p>"
+    for gene in pathway_info["gene_list"]:
+        gene_list_text += "<p><a href=\"" + gene[0] + ">" + gene[1] + "</a></p>"
     output_list.append(gene_list_text)
     # Finding known parents of the pathway (using pathway commons)
     parents_text = "<h2>Known parent pathways:</h2>"
@@ -68,6 +75,7 @@ def get_pathway_results(identifier, name):
 
 def product_query(query_list):
     query = query_list[0].split(":")[1:]
+    gene = None
     # This means it's a name
     if len(query) == 1:
         gene = Gene(name=query[0])
@@ -89,28 +97,32 @@ def get_product_results(gene):
         output_list.append("<p><h2>Gene function(s):</h2><p>")
         for index, function in enumerate(gene.functions):
             output_list.append("<p>" + str(index + 1) + ": " + function + "</p>")
-    pathways = general.pathways_given_product(gene.name)
-    if len(pathways[0]) > 0:
+
+    # Retrieving pathways that it participates in
+    pathways_dict = api.pathways_given_gene(gene.name)
+    if len(pathways_dict["kegg_pathways"]) > 0:
         output_list.append("<h2>[KEGG] Participant in:</h2>")
-        for i in pathways[0]:
+        for i in pathways_dict["kegg_pathways"]:
             line = """
             <p><a href=\"http://www.genome.jp/dbget-bin/www_bget?""" + i[0] + """\">""" + i[1] + """</a></p>
             """
             output_list.append(line)
-    if len(pathways[1]) > 0:
+    if len(pathways_dict["pc_pathways"]) > 0:
         output_list.append("<h2>[Pathway Commons] Participant in:</h2>")
-        for i in pathways[1]:
+        for i in pathways_dict["pc_pathways"]:
             line = """
                     <p>""" + i[0] + """</a></p>
                     """
             output_list.append(line)
+
+    # TODO: Keep this but improve functional enrichment stuff - use API to generate list of first/second shell
     output_list.append("<p><h2><a href=\"/enrichment?genes=" + gene.uniprot_id + "\">Functional enrichment</a></h2></p>")
     return output_list
 
 
 def pathway_product_query(pathway_query, product_query):
+
     pathway_list = pathway_query.split(":")[1:]
-    product_list = product_query.split(":")[1:]
     # Query is a name of pathway
     pathway_name = None
     pathway_identifier = None
@@ -131,39 +143,42 @@ def pathway_product_query(pathway_query, product_query):
         if info is not None:
             pathway_name = info[1][12:]
 
-    product_name = None
-    product_identifier = None
+    product_list = product_query.split(":")[1:]
+    gene = None
 
     if len(product_list) == 1:
-        product_name = product_list[0]
-        uniprot_id = uniprot_helper.get_uniprot_identifier(product_name)
-        if uniprot_id is not None:
-            product_identifier = kegg_helper.kegg_identifier_convert(uniprot_id)
-
+        gene = Gene(name=product_list[0])
     elif len(product_list) == 2:
-        product_identifier = product_list[0] + ":" + product_list[1]
-        gene_info = kegg_helper.kegg_info(product_identifier)
-        product_name = gene_info[1][12:].split(",")[0]
+        gene_identifier = product_list[1]
+        gene = Gene(uniprot_id=gene_identifier)
 
-    if product_name is not None and product_identifier is not None and pathway_name is not None and pathway_identifier is not None:
-        return get_pathway_product_results(pathway_name, pathway_identifier, product_name, product_identifier)
+    if all(v is not None for v in [gene.name, gene.uniprot_id, pathway_name, pathway_identifier]):
+        return get_pathway_product_results(gene, pathway_name, pathway_identifier)
 
     return ["No results found - have you checked for typos? The query may be malformed."]
 
 
-def get_pathway_product_results(pathway_name, pathway_identifier, product_name, product_identifier):
-    output_list = ["<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + product_identifier +
-                   "\"><h2>KEGG entry for " + product_name + "</h2></a>",
+def get_pathway_product_results(gene, pathway_name, pathway_identifier):
+    pathway = (pathway_name, pathway_identifier)
+    # Links
+    output_list = ["<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene.kegg_id +
+                   "\"><h2>KEGG entry for " + gene.name + "</h2></a>",
                    "<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + pathway_identifier +
                    "\"><h2>KEGG entry for " + pathway_name + "</h2></a>", "<p><h2>Participation verdict:</h2><p>"]
-    participation_verdict = general.product_participation(product_name, pathway_name)
+
+    # Getting info from the API:
+    #  participation_verdict
+    #  participant_kegg_ids
+    #  TBC...
+    interaction_info = api.pathway_gene_interaction(pathway, gene)
+    participation_verdict = interaction_info["participation_verdict"]
+
+    # Does the gene participate in the pathway?
     output_list.append("<p>KEGG: " + str(participation_verdict[0]) + "</p>")
     output_list.append("<p>Pathway Commons: " + str(participation_verdict[1]) + "</p>")
-    pathway = kegg_helper.kegg_get_pathway(pathway_identifier)
-    enrichment_names = product_name + " "
-    for gene in pathway.genes:
-        enrichment_names += gene.name.split(" ")[0] + " "
-    enrichment_names = enrichment_names[:-1]
+
+    # Generate functional enrichment (currently uses embedded string stuff)
+    enrichment_names = interaction_info["enrichment_names"]
     output_list.append("<p><h2><a href=\"/enrichment?genes=" + enrichment_names
                        + "\">Functional enrichment</a></h2></p>")
     return output_list
@@ -173,40 +188,35 @@ def product_product_query(query1, query2):
     list1 = query1.split(":")[1:]
     list2 = query2.split(":")[1:]
 
-    name1 = identifier1 = name2 = identifier2 = None
+    gene1 = gene2 = None
 
     if len(list1) == 1:
-        name1 = list1[0]
-        uniprot_id1 = uniprot_helper.get_uniprot_identifier(name1)
-        if uniprot_id1 is not None:
-            identifier1 = kegg_helper.kegg_identifier_convert(uniprot_id1)
+        gene1 = Gene(name=list1[0])
     elif len(list1) == 2:
-        identifier1 = list1[0] + ":" + list1[1]
-        gene_info = kegg_helper.kegg_info(identifier1)
-        name1 = gene_info[1][12:].split(",")[0]
+        identifier = list1[1]
+        gene1 = Gene(uniprot_id=identifier)
 
     if len(list2) == 1:
-        name2 = list2[0]
-        uniprot_id2 = uniprot_helper.get_uniprot_identifier(name2)
-        if uniprot_id2 is not None:
-            identifier2 = kegg_helper.kegg_identifier_convert(uniprot_id2)
+        gene2 = Gene(name=list2[0])
     elif len(list2) == 2:
-        identifier2 = list2[0] + ":" + list2[1]
-        gene_info = kegg_helper.kegg_info(identifier2)
-        name2 = gene_info[1][12:].split(",")[0]
+        identifier = list2[1]
+        gene2 = Gene(uniprot_id=identifier)
 
-    if all(v is not None for v in [name1, name2, identifier1, identifier2]):
-        return get_product_product_results(name1, identifier1, name2, identifier2)
+    if all(v is not None for v in [gene1.name, gene1.uniprot_id, gene2.name, gene2.uniprot_id]):
+        return get_product_product_results(gene1, gene2)
 
     return ["No results found - have you checked for typos? The query may be malformed."]
 
 
-def get_product_product_results(name1, identifier1, name2, identifier2):
-    pathways1 = general.pathways_given_product(name1)
-    pathways2 = general.pathways_given_product(name2)
-    accession_numbers2 = [i[0] for i in pathways2[0]]
+def get_product_product_results(gene1, gene2):
+
+    pathways1 = api.pathways_given_gene(gene1.name)
+    pathways2 = api.pathways_given_gene(gene2.name)
+
+    # pathway[0] contains its accession ID
+    accession_numbers2 = [pathway[0] for pathway in pathways2["kegg_pathways"]]
     mutual_pathways = []
-    for pathway in pathways1[0]:
+    for pathway in pathways1["kegg_pathways"]:
         if pathway[0] in accession_numbers2:
             mutual_pathways.append(pathway)
 
@@ -219,7 +229,7 @@ def get_product_product_results(name1, identifier1, name2, identifier2):
             line = "<p><a href=\"http://www.genome.jp/dbget-bin/www_bget?" + pathway[0] + "\">" + pathway[1] + "</a><p>"
             output.append(line)
 
-    output.append("<p><h2><a href=\"/enrichment?genes=" + name1 + " " + name2
+    output.append("<p><h2><a href=\"/enrichment?genes=" + gene1.name + " " + gene2.name
                   + "\">Functional enrichment</a></h2></p>")
 
     return output

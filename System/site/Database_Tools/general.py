@@ -29,13 +29,20 @@ def pathways_given_pathway(pathway_name):
     return pathwaycommons_helper.pathway_given_pathway(pathway_name)
 
 
-def product_participation(product, pathway):
-    uniprot_id = uniprot_helper.get_uniprot_identifier(product)
+def product_participation(gene, pathway_name, pathway_id=None):
 
     # PC SEARCH
-    pc_outcome = pathwaycommons_helper.pc_participation_check(uniprot_id, pathway)
+    pc_outcome = pathwaycommons_helper.pc_participation_check(gene.uniprot_id, pathway_name)
 
     # KEGG SEARCH
-    kegg_id = kegg_helper.kegg_identifier_convert(uniprot_id)
-    kegg_outcome = kegg_helper.kegg_pathway_participation(kegg_id, pathway)
+    kegg_pathway_id = None
+    if pathway_id is None:
+        kegg_pathway_id = kegg_helper.kegg_search("pathway", pathway_name)
+    else:
+        kegg_pathway_id = pathway_id
+
+    print(repr(gene.kegg_id))
+    print(repr(kegg_pathway_id))
+    kegg_outcome = kegg_helper.kegg_pathway_participation(gene.kegg_id, kegg_pathway_id)
+    print(kegg_outcome)
     return kegg_outcome, pc_outcome
