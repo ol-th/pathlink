@@ -1,5 +1,7 @@
 from .Database_Tools import kegg_helper, uniprot_helper, pathwaycommons_helper, general
 from .classes import Gene
+import pymongo
+import configparser
 
 
 # TODO: Include Relations?
@@ -42,3 +44,30 @@ def pathway_gene_interaction(pathway, gene):
         "enrichment_names": enrichment_names
     }
 
+
+def gene_mutation_data(gene, variant):
+    config = configparser.ConfigParser()
+    config.read("server_config")
+
+    if "mutations_db" not in config or "uri" not in config["mutations_db"]:
+        print("Server config not found!")
+        return None
+
+    client = pymongo.MongoClient(config["mutations_db"]["uri"])
+    db = client["variants"]
+    variant_summaries_collection = db["variant_summaries"]
+    return variant_summaries_collection.find({"gene": gene, "variant": variant})
+
+
+def variant_evidence(gene, variant):
+    config = configparser.ConfigParser()
+    config.read("server_config")
+
+    if "mutations_db" not in config or "uri" not in config["mutations_db"]:
+        print("Server config not found!")
+        return None
+
+    client = pymongo.MongoClient(config["mutations_db"]["uri"])
+    db = client["variants"]
+    evidence_summaries_collection = db["evidence_summaries"]
+    return evidence_summaries_collection.find({"gene": gene, "variant": variant})

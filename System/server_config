@@ -2,3 +2,5 @@
 username = neo4j
 password = example
 uri = neo4j://localhost:7687
+[mutations_db]
+uri = mongodb://127.0.0.1:27017

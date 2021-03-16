@@ -5,6 +5,7 @@ from . import api
 
 # First entrypoint - this handles the query syntax and sends them to respective handlers
 # example query: gene:PTEN; path: homologous recombination
+# TODO: Find a nicer solution for this
 def search(query):
     query = str(query)
     query_list = [i.strip() for i in query.split(";")]
@@ -22,7 +23,10 @@ def search(query):
             return pathway_product_query(query_list[1], query_list[0])
         if query_list[0].startswith("gene") and query_list[1].startswith("gene"):
             return product_product_query(query_list[0], query_list[1])
-        # TODO: mutations query
+        if query_list[0].startswith("gene") and query_list[1].startswith("mutation"):
+            return product_variant_query(query_list[0], query_list[1])
+        if query_list[0].startswith("gene") and query_list[1].startswith("mutation"):
+            return product_variant_query(query_list[0], query_list[1])
     else:
         return ["Malformed query"]
 
@@ -162,8 +166,10 @@ def pathway_product_query(pathway_query, product_query):
 def get_pathway_product_results(gene, pathway_name, pathway_identifier):
     pathway = (pathway_name, pathway_identifier)
     # Links
-    output_list = ["<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene.kegg_id +
-                   "\"><h2>KEGG entry for " + gene.name + "</h2></a>",
+    output_list = ["<p><h2>" + gene.name + ":</h2></p>"
+                   "<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene.kegg_id +
+                   "\">KEGG</a>",
+                   "<p><a href=\"http://www.uniprot.org/uniprot/" + gene.uniprot_id + "\">UniProt</a></p>",
                    "<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + pathway_identifier +
                    "\"><h2>KEGG entry for " + pathway_name + "</h2></a>",
                    "<p><h2>Participation verdict:</h2><p>"]
@@ -241,4 +247,44 @@ def get_product_product_results(gene1, gene2):
     output.append("<p><h2><a href=\"/enrichment?genes=" + gene1.name + " " + gene2.name
                   + "\">Functional enrichment</a></h2></p>")
 
+    return output
+
+
+# Product-variant interaction query - returns clinical significance etc
+def product_variant_query(gene_query, variant_query):
+
+    gene_list = gene_query.split(":")[1:]
+
+    gene = None
+    if len(gene_list) == 1:
+        gene = Gene(name=gene_list[0])
+    elif len(gene_list) == 2:
+        identifier = gene_list[1]
+        gene = Gene(uniprot_id=identifier)
+
+    variant = variant_query.split(":")[1]
+
+    return get_product_mutation_query(gene, variant)
+
+
+def get_product_mutation_query(gene, variant):
+    gene_info_dicts = api.gene_mutation_data(gene.name, variant)
+    evidence_info_dicts = api.variant_evidence(gene.name, variant)
+    if gene_info_dicts.count() == 0:
+        return ["Variant/mutation not found - malformed query?"]
+
+    first_variant = gene_info_dicts[0]
+    output = ["<p><h2>" + gene.name + ":</h2></p>"
+              "<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene.kegg_id +
+              "\">KEGG</a>",
+              "<p><a href=\"http://www.uniprot.org/uniprot/" + gene.uniprot_id + "\">UniProt</a></p>",
+              "<p><h2>" + gene.name + " " + variant + ":</h2></p>",
+              "<p> Clinical Significance (ClinVar): " + first_variant["ClinicalSignificance"],
+              "<p><a href=\"" + first_variant["variant_civic_url"] + "\"> CiViC database Entry</a><p>",
+              "<p><h2>Evidence findings:</h2></p>",
+              "<p>Potential drugs:</p>",
+              ]
+    for evidence in evidence_info_dicts:
+        output.append("<p>" + evidence["drugs"] + " - <a href=\"" + evidence["evidence_civic_url"] +
+                      "\">Evidence</a></p>")
     return output
