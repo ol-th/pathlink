@@ -14,9 +14,11 @@ def search(query):
         if query_list[0].startswith("gene"):
             return product_query(query_list)
     elif len(query_list) == 2:
-        if (query_list[0].startswith("path") or query_list[0].startswith("pathway")) and query_list[1].startswith("gene"):
+        if (query_list[0].startswith("path") or query_list[0].startswith("pathway")) and query_list[1].startswith(
+                "gene"):
             return pathway_product_query(query_list[0], query_list[1])
-        if query_list[0].startswith("gene") and (query_list[1].startswith("path") or query_list[1].startswith("pathway")):
+        if query_list[0].startswith("gene") and (
+                query_list[1].startswith("path") or query_list[1].startswith("pathway")):
             return pathway_product_query(query_list[1], query_list[0])
         if query_list[0].startswith("gene") and query_list[1].startswith("gene"):
             return product_product_query(query_list[0], query_list[1])
@@ -52,7 +54,6 @@ def pathway_query(query_list):
 
 
 def get_pathway_results(identifier, name):
-
     # Keys: pathway_name, pathway_link, gene_list [link, name]
     pathway_info = api.get_pathway_info(identifier)
 
@@ -116,12 +117,12 @@ def get_product_results(gene):
             output_list.append(line)
 
     # TODO: Keep this but improve functional enrichment stuff - use API to generate list of first/second shell
-    output_list.append("<p><h2><a href=\"/enrichment?genes=" + gene.uniprot_id + "\">Functional enrichment</a></h2></p>")
+    output_list.append(
+        "<p><h2><a href=\"/enrichment?genes=" + gene.uniprot_id + "\">Functional enrichment</a></h2></p>")
     return output_list
 
 
 def pathway_product_query(pathway_query, product_query):
-
     pathway_list = pathway_query.split(":")[1:]
     # Query is a name of pathway
     pathway_name = None
@@ -164,7 +165,8 @@ def get_pathway_product_results(gene, pathway_name, pathway_identifier):
     output_list = ["<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene.kegg_id +
                    "\"><h2>KEGG entry for " + gene.name + "</h2></a>",
                    "<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + pathway_identifier +
-                   "\"><h2>KEGG entry for " + pathway_name + "</h2></a>", "<p><h2>Participation verdict:</h2><p>"]
+                   "\"><h2>KEGG entry for " + pathway_name + "</h2></a>",
+                   "<p><h2>Participation verdict:</h2><p>"]
 
     # Getting info from the API:
     #  participation_verdict
@@ -209,7 +211,6 @@ def product_product_query(query1, query2):
 
 
 def get_product_product_results(gene1, gene2):
-
     pathways1 = api.pathways_given_gene(gene1.name)
     pathways2 = api.pathways_given_gene(gene2.name)
 
@@ -220,7 +221,15 @@ def get_product_product_results(gene1, gene2):
         if pathway[0] in accession_numbers2:
             mutual_pathways.append(pathway)
 
-    output = ["<h2>Mutual pathways:</h2>"]
+    output = [
+        "<p><h2> Entries for " + gene1.name + ": </h2></p>",
+        "<p><a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene1.kegg_id + "\">KEGG</a></p>",
+        "<p><a href=\"http://www.uniprot.org/uniprot/" + gene1.uniprot_id + "\">UniProt</a></p>",
+        "<p><h2> Entries for " + gene2.name + ": </h2></p>",
+        "<p><a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene2.kegg_id + "\">KEGG</a></p>",
+        "<p><a href=\"http://www.uniprot.org/uniprot/" + gene2.uniprot_id + "\">UniProt</a></p>",
+        "<h2>Mutual pathways:</h2>"
+    ]
 
     if len(mutual_pathways) == 0:
         output.append("<p>None</p>")

@@ -36,14 +36,15 @@ def get_uniprot_xml(identifier):
 
 
 def get_uniprot_name(xml):
-    index = 0
-    while index < len(xml[0]) and xml[0][index].tag != "{http://uniprot.org/uniprot}protein":
-        index += 1
-
-    if index == len(xml[0]):
+    if xml is None:
         return None
-
-    return xml[0][index][0][0].text
+    entry = xml[0]
+    gene = entry.find("{http://uniprot.org/uniprot}gene")
+    names = gene.findall("{http://uniprot.org/uniprot}name")
+    for name in names:
+        if name.attrib["type"] == "primary":
+            return name.text
+    return None
 
 
 def get_uniprot_functions(xml):
