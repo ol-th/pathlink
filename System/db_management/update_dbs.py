@@ -15,15 +15,15 @@ def replace_string(x):
 
 database_url = sys.argv[1]
 
-variant_summaries = pd.read_csv("./variant_summary.txt", sep="\t")
+variant_summaries = pd.read_csv("variant_summary.txt", sep="\t")
 variant_summaries = variant_summaries.filter(["AlleleID", "RS# (dbSNP)", "Type", "ClinicalSignificance", "ReviewStatus"])
-variation_allele = pd.read_csv("./variation_allele.txt", sep="\t")
+variation_allele = pd.read_csv("variation_allele.txt", sep="\t")
 variation_allele.drop(columns=['Type', 'Interpreted'], inplace=True)
 
 variant_summaries = variant_summaries.merge(variation_allele, how="inner", on="AlleleID")
 variant_summaries = variant_summaries.rename(columns={"VariationID": "clinvar_ids"})
 
-civic_variant_summaries = pd.read_csv("./nightly-VariantSummaries.tsv", sep="\t", error_bad_lines=False, warn_bad_lines=True)
+civic_variant_summaries = pd.read_csv("nightly-VariantSummaries.tsv", sep="\t", error_bad_lines=False, warn_bad_lines=True)
 civic_variant_summaries.filter(["variants", "variant_id", "gene", "variant", "summary",
                                 "variant_groups", "civic_variant_evidence_score", "clinvar_ids"])
 civic_variant_summaries["clinvar_ids"] = civic_variant_summaries["clinvar_ids"].apply(replace_string)
@@ -32,7 +32,7 @@ civic_variant_summaries = civic_variant_summaries.explode("clinvar_ids")
 
 variant_summaries = civic_variant_summaries.merge(variant_summaries, how="inner", on="clinvar_ids")
 
-evidence_summaries = pd.read_csv("./nightly-ClinicalEvidenceSummaries.tsv", sep="\t", error_bad_lines=False, warn_bad_lines=True)
+evidence_summaries = pd.read_csv("nightly-ClinicalEvidenceSummaries.tsv", sep="\t", error_bad_lines=False, warn_bad_lines=True)
 
 client = pymongo.MongoClient(database_url)
 db = client["variants"]

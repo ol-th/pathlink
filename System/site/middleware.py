@@ -1,5 +1,5 @@
-from .Database_Tools import kegg_helper, uniprot_helper, pathwaycommons_helper, general
-from .classes import Gene
+from .utilities import kegg_helper, pathwaycommons_helper
+from .utilities.classes import Gene
 from . import api
 
 
@@ -164,7 +164,6 @@ def pathway_product_query(pathway_query, product_query):
 
 
 def get_pathway_product_results(gene, pathway_name, pathway_identifier):
-    pathway = (pathway_name, pathway_identifier)
     # Links
     output_list = ["<p><h2>" + gene.name + ":</h2></p>"
                    "<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene.kegg_id +
@@ -178,12 +177,11 @@ def get_pathway_product_results(gene, pathway_name, pathway_identifier):
     #  participation_verdict
     #  participant_kegg_ids
     #  TBC...
-    interaction_info = api.pathway_gene_interaction(pathway, gene)
+    interaction_info = api.pathway_gene_interaction(pathway_name, pathway_kegg_id=pathway_identifier, input_gene=gene)
     participation_verdict = interaction_info["participation_verdict"]
 
     # Does the gene participate in the pathway?
-    output_list.append("<p>KEGG: " + str(participation_verdict[0]) + "</p>")
-    output_list.append("<p>Pathway Commons: " + str(participation_verdict[1]) + "</p>")
+    output_list.append("<p>KEGG: " + str(participation_verdict) + "</p>")
 
     # Generate functional enrichment (currently uses embedded string stuff)
     enrichment_names = interaction_info["enrichment_names"]
@@ -280,6 +278,7 @@ def get_product_mutation_query(gene, variant):
               "<p><a href=\"http://www.uniprot.org/uniprot/" + gene.uniprot_id + "\">UniProt</a></p>",
               "<p><h2>" + gene.name + " " + variant + ":</h2></p>",
               "<p> Clinical Significance (ClinVar): " + first_variant["ClinicalSignificance"],
+              "<p> Variant types: " + first_variant["variant_types"],
               "<p><a href=\"" + first_variant["variant_civic_url"] + "\"> CiViC database Entry</a><p>",
               "<p><h2>Evidence findings:</h2></p>",
               "<p>Potential drugs:</p>",

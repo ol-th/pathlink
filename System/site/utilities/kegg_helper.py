@@ -4,16 +4,15 @@ import Bio.KEGG.KGML.KGML_parser as KEGG_KGML_PARSER
 
 
 def kegg_search(database, query):
-    result = KEGG_REST.kegg_find(database, query)
+    result = KEGG_REST.kegg_find(database, query.replace(" ", "+"))
     result_lines = result.read().split('\n')
     result_lines = result_lines[:-1]
     if result_lines[0] == "":
         return []
 
     output = []
-    # This looks horrible, but for some reason KEGG puts path: in front of results??
     for result in result_lines:
-        output.append(result.split('\t')[0].replace("path:", ""))
+        output.append(result.split('\t')[0])
     return output
 
 
@@ -28,7 +27,9 @@ def kegg_identifier_convert(id):
 
 
 def kegg_get_pathway(identifier):
-    pathway_kgml = KEGG_REST.kegg_get(identifier, "kgml")
+    identifier_sanitised = identifier.replace("path:", "")
+    identifier_sanitised = identifier_sanitised.replace("map", "hsa")
+    pathway_kgml = KEGG_REST.kegg_get(identifier_sanitised, "kgml")
     return KEGG_KGML_PARSER.read(pathway_kgml)
 
 
@@ -66,7 +67,10 @@ def kegg_gene_list(gene_list):
     full_list = []
     for index, line in enumerate(result_lines):
 
-        name = " ".join(line.split(" ")[1:])
+        names = line.split("\t")[1]
+        name = names.split(" ")[0]
+        for char in ",;":
+            name = name.replace(char, "")
         full_list.append((gene_list[index].link, name))
 
     return full_list
