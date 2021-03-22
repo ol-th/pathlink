@@ -1,4 +1,4 @@
-from .utilities import kegg_helper, general, neo4j_helper, mongo_helper
+from .utilities import kegg_helper, general, neo4j_helper, mongo_helper, config
 from .utilities.classes import Gene
 from bson import json_util
 import configparser
@@ -58,49 +58,41 @@ def pathway_gene_interaction(pathway_name, pathway_kegg_id=None, input_gene=None
 
 
 # Returns mutation data from mongo db given gene, variant name
-def gene_mutation_data(gene, variant):
-    config = configparser.ConfigParser()
-    config.read("server_config")
-
-    if "mutations_db" not in config or "uri" not in config["mutations_db"]:
-        print("Server config not found!")
-        return None
-    
-    return mongo_helper.get_mutation_data(gene, variant, config["mutations_db"]["uri"])
+def gene_variant_data(gene, variant):
+    db_config = config.get_config()
+    return mongo_helper.get_mutation_data(gene, variant, db_config["mutations_db"]["uri"])
 
 
 # Returns any evidence stored in evidence db
 def variant_evidence(gene, variant):
-    config = configparser.ConfigParser()
-    config.read("server_config")
+    db_config = config.get_config()
 
-    if "mutations_db" not in config or "uri" not in config["mutations_db"]:
-        print("Server config not found!")
-        return None
-
-    return mongo_helper.variant_evidence(gene, variant, config["mutations_db"]["uri"])
+    return mongo_helper.variant_evidence(gene, variant, db_config["mutations_db"]["uri"])
 
 
 # Returns a cypher query to create a Neo4j representation of an identified pathway
 # Expected format: hsa:<id>
 # TODO: Add mutation support
-# TODO: Add functional enrichment support?
+# TODO: Add functional enrichment support? Need to complete API stuff first
 def neo4j_pathway(identifier, options=None):
     if options is None:
-        options = {}
-    identifier_list = identifier.split(":")
-    if len(identifier_list) != 2:
-        return {}
-    accession = identifier_list[0] + identifier_list[1]
+        options = ""
+    accession = identifier
     pathway = kegg_helper.kegg_get_pathway(accession)
 
-    # This "known" dict handles the unknown nodes in the graph
+    gene_names = neo4j_helper.make_genes_from_kegg_pathway(pathway.genes)
+    mongo_uri = config.get_config()["mutations_db"]["uri"]
+
+    # This "known" dict is checked afterwards to find unknown nodes in the graph
     known = {}
-    query = "CREATE "
-    query_list = [neo4j_helper.make_gene_query(pathway.genes, known),
+    create_query = "CREATE "
+    query_list = [neo4j_helper.make_gene_query(pathway, gene_names, known),
                   neo4j_helper.make_compound_query(pathway.compounds, known),
                   neo4j_helper.make_reaction_query(pathway.reaction_entries, known),
-                  neo4j_helper.make_map_query(pathway.maps, known)]
+                  neo4j_helper.make_map_query(pathway.name)]
+
+    if "variants" in options:
+        query_list.append(neo4j_helper.make_variants_query(zip(gene_names, pathway.genes)))
 
     relations_data = neo4j_helper.make_relations_query(pathway.relations, known)
     query_list.append(neo4j_helper.make_unknown_query(relations_data[1]))
@@ -108,23 +100,15 @@ def neo4j_pathway(identifier, options=None):
 
     for q in query_list:
         if len(q) > 0:
-            query += q + ","
-    query = query[:-1]
+            create_query += q + ","
+    create_query = create_query[:-1]
 
-    # if "mutations" in options.keys():
-    #     query += neo4j_helper.make_mutation_query(genes)
+    pipeline = [create_query,
+                "MATCH (n1),(n2) WHERE ANY (x IN n1.name WHERE x IN n2.name) and id(n1) < id(n2) "
+                "WITH [n1,n2] as ns CALL apoc.refactor.mergeNodes(ns, {properties:\"combine\", mergeRels:true}) "
+                "YIELD node RETURN node",
+                "MATCH (n1:Variant),(n2:Variant) WHERE n1.variant = n2.variant and id(n1) < id(n2)"
+                "WITH [n1,n2] as ns CALL apoc.refactor.mergeNodes(ns, {properties:\"combine\", mergeRels:true}) "
+                "YIELD node RETURN node"]
 
-    # Merge matching nodes
-    query += """ MATCH (n1),(n2)
-                 WHERE ANY (x IN n1.name WHERE x IN n2.name) and id(n1) < id(n2)
-                 WITH [n1,n2] as ns
-                 CALL apoc.refactor.mergeNodes(ns) YIELD node"""
-
-    query += """MATCH (a)-[r1]->(b)
-             MATCH (a)-[r2]->(b)
-             WHERE id(r1) < id(r2)
-             WITH [r1,r2] as rs
-             CALL apoc.refactor.mergeRelationships(rs) YIELD rel
-             RETURN NULL"""
-
-    return {"neo4j_query": query}
+    return {"neo4j_query_pipeline": pipeline}

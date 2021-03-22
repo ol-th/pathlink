@@ -1,31 +1,57 @@
 from neo4j import GraphDatabase
-from . import kegg_helper
+from . import kegg_helper, mongo_helper, config
 
 
-def make_genes_from_kegg_pathway(gene_list, known):
-    # TODO:
-    #  Use params to pass the attributes into the cypher query - kegg id and name :).
+def make_genes_from_kegg_pathway(gene_list):
     kegg_ids = []
     for gene in gene_list:
-        known[gene.id] = True
         kegg_ids.append(gene.name.split(",")[0])
 
     gene_names = kegg_helper.kegg_gene_list(gene_list)
-    print(len(kegg_ids))
-    print(len(gene_names))
+
     if len(kegg_ids) != len(gene_names):
         return None
 
-    return None
+    return gene_names
 
 
-def make_gene_query(gene_list, known):
+def make_gene_query(pathway, gene_names, known):
+    gene_list = pathway.genes
     query = ""
-    for gene in gene_list:
+    for gene, gene_name in zip(gene_list, gene_names):
         known[gene.id] = True
         query += "(a" + str(gene.id) + ":Gene {"\
-                 "kegg_ids: [\"" + gene.name.strip().replace(" ", "\",\"") + "\"]}),"
+                 "name: \"" + gene_name[1] + "\","\
+                 "kegg_ids: [\"" + gene.name.strip().replace(" ", "\",\"") + "\"]," \
+                 "kegg_link: \"" + gene_name[0] + "\"," \
+                 "pathways: [\"" + pathway.name + "\"]}),"
+
     # Removing trailing comma
+    query = query[:-1]
+    return query
+
+
+# gene_info:
+#   [0] - Gene name (0 - link, 1 - name)
+#   [1] - Gene object
+def make_variants_query(gene_info):
+    uri = config.get_config()["mutations_db"]["uri"]
+    query = ""
+    mutation_id = 0
+    for gene_name, gene in gene_info:
+        mutations = mongo_helper.get_mutations(gene_name[1], uri)
+        for mutation in mutations:
+            # Add mutation query
+            query += "(v" + str(mutation_id) + ":Variant {" \
+                        "gene: \"" + str(mutation["gene"]) + "\", " \
+                        "variant: \"" + str(mutation["variant"]) + "\", " \
+                        "rsid: \"" + str(mutation["RS# (dbSNP)"]) + "\", " \
+                        "type: \"" + str(mutation["Type"]) + "\", " \
+                        "clinicalsignificance: \"" + str(mutation["ClinicalSignificance"]) + "\"" \
+                        "}),"
+            query += "(a" + str(gene.id) + ")-[:hasVariant]->(v" + str(mutation_id) + "),"
+            mutation_id += 1
+
     query = query[:-1]
     return query
 
@@ -67,7 +93,8 @@ def make_reaction_query(reaction_list, known):
 
 
 def make_map_query(map_id):
-    query = "(m1:Map {kegg_ids: [" + map_id + "]})"
+    query = "(m1:Map {kegg_ids: [\"" + map_id + "\"]})"
+    return query
 
 
 def make_relations_query(relation_list, known):
@@ -96,4 +123,3 @@ def make_unknown_query(unknown_list):
 
     query = query[:-1]
     return query
-

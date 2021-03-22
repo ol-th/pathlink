@@ -54,7 +54,7 @@ def variant_api():
     gene_name = request.args.get("gene_name")
     variant_name = request.args.get("variant")
     if all(v is not None for v in [gene_name, variant_name]):
-        result = api.gene_mutation_data(gene_name, variant_name)
+        result = api.gene_variant_data(gene_name, variant_name)
         result_list = list(result)
         output = {"results": json_util.dumps(result_list)}
         return jsonify(output)
@@ -71,3 +71,10 @@ def variant_evidence_api():
         output = {"results": json_util.dumps(result_list)}
         return jsonify(output)
     return ""
+
+
+@app.route('/api/pathway_to_cypher', methods=["GET"])
+def pathway_to_cypher_api():
+    pathway_id = request.args.get("id")
+    options = request.args.get("options")
+    return jsonify(api.neo4j_pathway(pathway_id, options=options))

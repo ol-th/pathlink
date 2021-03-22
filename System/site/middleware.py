@@ -23,10 +23,10 @@ def search(query):
             return pathway_product_query(query_list[1], query_list[0])
         if query_list[0].startswith("gene") and query_list[1].startswith("gene"):
             return product_product_query(query_list[0], query_list[1])
-        if query_list[0].startswith("gene") and query_list[1].startswith("mutation"):
+        if query_list[0].startswith("gene") and query_list[1].startswith("variant"):
             return product_variant_query(query_list[0], query_list[1])
-        if query_list[0].startswith("gene") and query_list[1].startswith("mutation"):
-            return product_variant_query(query_list[0], query_list[1])
+        if query_list[1].startswith("gene") and query_list[0].startswith("variant"):
+            return product_variant_query(query_list[1], query_list[0])
     else:
         return ["Malformed query"]
 
@@ -262,11 +262,11 @@ def product_variant_query(gene_query, variant_query):
 
     variant = variant_query.split(":")[1]
 
-    return get_product_mutation_query(gene, variant)
+    return get_product_variant_query(gene, variant)
 
 
-def get_product_mutation_query(gene, variant):
-    gene_info_dicts = api.gene_mutation_data(gene.name, variant)
+def get_product_variant_query(gene, variant):
+    gene_info_dicts = api.gene_variant_data(gene.name, variant)
     evidence_info_dicts = api.variant_evidence(gene.name, variant)
     if gene_info_dicts.count() == 0:
         return ["Variant/mutation not found - malformed query?"]
