@@ -1,5 +1,4 @@
 #!/bin/bash
-
 rm *.txt
 rm *.tsv
 rm *.gz
