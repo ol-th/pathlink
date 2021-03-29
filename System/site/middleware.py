@@ -1,4 +1,4 @@
-from .utilities import kegg_helper, pathwaycommons_helper
+from .utilities import kegg_helper, pathwaycommons_helper, mongo_helper
 from .utilities.classes import Gene
 from . import api
 
@@ -62,11 +62,12 @@ def get_pathway_results(identifier, name):
     pathway_info = api.get_pathway_info(identifier)
 
     # Adding the pathway link
-    output_list = ["<a href=\"" + pathway_info["pathway_link"] + "\"><h2>KEGG entry for pathway</h2></a>"]
+    output_list = ["<a href=\"" + pathway_info["pathway_link"] + "\"><h2>KEGG entry for pathway</h2></a>",
+                   "<p>Description: " + pathway_info["pathway_description"] + "<p>"]
     # Adding a list of genes involved
     gene_list_text = "<p><h2>Gene participants:</h2></p>"
     for gene in pathway_info["gene_list"]:
-        gene_list_text += "<p><a href=\"" + gene[0] + ">" + gene[1] + "</a></p>"
+        gene_list_text += "<p><a href=\"" + gene[0] + "\">" + gene[1] + "</a></p>"
     output_list.append(gene_list_text)
     # Finding known parents of the pathway (using pathway commons)
     parents_text = "<h2>Known parent pathways:</h2>"
@@ -119,6 +120,11 @@ def get_product_results(gene):
                     <p>""" + i[0] + """</a></p>
                     """
             output_list.append(line)
+    variants = api.gene_variants(gene.name)
+    if variants.count() > 0:
+        output_list.append("<p><h2>Variants</h2></p>")
+        for variant in variants:
+            output_list.append("<p>" + variant["variant"] + "</p>")
 
     # TODO: Keep this but improve functional enrichment stuff - use API to generate list of first/second shell
     output_list.append(

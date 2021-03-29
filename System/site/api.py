@@ -7,10 +7,12 @@ import configparser
 # Returns pathway name, link, participants
 def get_pathway_info(identifier):
     pathway = kegg_helper.kegg_get_pathway(identifier)
+    description = kegg_helper.kegg_pathway_desc(identifier)
     # Outputs tuple (link, name)
     gene_tuple = kegg_helper.kegg_gene_list(pathway.genes)
     return {
         "pathway_name": pathway.name,
+        "pathway_description": description,
         "pathway_link": pathway.link,
         "gene_list": gene_tuple
     }
@@ -20,8 +22,8 @@ def get_pathway_info(identifier):
 def pathways_given_gene(gene_name):
     pathways = general.pathways_given_product(gene_name)
     return {
-        "kegg_pathways": pathways[0],
-        "pc_pathways": pathways[1]
+        "kegg_pathways": pathways,
+        "pc_pathways": []
     }
 
 # TODO: function_enrichment_gene_list
@@ -55,6 +57,11 @@ def pathway_gene_interaction(pathway_name, pathway_kegg_id=None, input_gene=None
         "participation_verdict": participation_verdict,
         "enrichment_names": enrichment_names
     }
+
+
+def gene_variants(gene_name):
+    uri = config.get_config()["mutations_db"]["uri"]
+    return mongo_helper.get_mutations(gene_name, uri)
 
 
 # Returns mutation data from mongo db given gene, variant name
@@ -103,12 +110,17 @@ def neo4j_pathway(identifier, options=None):
             create_query += q + ","
     create_query = create_query[:-1]
 
-    pipeline = [create_query,
-                "MATCH (n1),(n2) WHERE ANY (x IN n1.name WHERE x IN n2.name) and id(n1) < id(n2) "
+    pipeline = [create_query]
+
+    if "networks" in options:
+        for query in neo4j_helper.make_networks_query(accession):
+            pipeline.append(query)
+
+    pipeline.append("MATCH (n1),(n2) WHERE ANY (x IN n1.name WHERE x IN n2.name) and id(n1) < id(n2) "
                 "WITH [n1,n2] as ns CALL apoc.refactor.mergeNodes(ns, {properties:\"combine\", mergeRels:true}) "
-                "YIELD node RETURN node",
-                "MATCH (n1:Variant),(n2:Variant) WHERE n1.variant = n2.variant and id(n1) < id(n2)"
+                "YIELD node RETURN node")
+    pipeline.append("MATCH (n1:Variant),(n2:Variant) WHERE n1.variant = n2.variant and id(n1) < id(n2)"
                 "WITH [n1,n2] as ns CALL apoc.refactor.mergeNodes(ns, {properties:\"combine\", mergeRels:true}) "
-                "YIELD node RETURN node"]
+                "YIELD node RETURN node")
 
     return {"neo4j_query_pipeline": pipeline}

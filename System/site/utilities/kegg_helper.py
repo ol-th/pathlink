@@ -39,6 +39,15 @@ def kegg_pathway_participation(gene_identifier, pathway_identifier):
     return gene_identifier in gene_names
 
 
+def kegg_pathway_desc(path_id):
+    info = kegg_info(path_id)
+    if info is None:
+        return None
+    for line in info:
+        if "DESCRIPTION" in line:
+            return line.replace("DESCRIPTION", "").strip()
+
+
 def kegg_info(id):
 
     r = requests.get("http://rest.kegg.jp/get/" + id)
@@ -74,4 +83,20 @@ def kegg_gene_list(gene_list):
         full_list.append((gene_list[index].link, name))
 
     return full_list
+
+
+def kegg_link(arg1, arg2):
+    query1 = arg1.replace(" ", "+")
+    query2 = arg2.replace(" ", "+")
+    r = requests.get("http://rest.kegg.jp/link/" + str(query1) + "/" + str(query2))
+    if r.status_code != 200:
+        return None
+    if r.text == "":
+        return None
+    lines = r.text.split("\n")
+    return [line.split("\t") for line in lines][:-1]
+
+
+def get_network_entry(name):
+    return kegg_search("NETWORK", name)
 

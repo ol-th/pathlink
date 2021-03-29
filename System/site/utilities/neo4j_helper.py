@@ -108,7 +108,9 @@ def make_relations_query(relation_list, known):
             unknown_set.add(relation.entry2.id)
         for subtype in relation.subtypes:
             current_query += "\"" + subtype[0] + "\","
-        current_query = current_query[:-1]
+        # Fixes a bug where there's no subtypes and it prints subtypes: ]
+        if len(relation.subtypes) > 0:
+            current_query = current_query[:-1]
         current_query += "]}]->(a" + str(relation.entry2.id) + "),"
         query += current_query
     # Removing trailing comma
@@ -123,3 +125,15 @@ def make_unknown_query(unknown_list):
 
     query = query[:-1]
     return query
+
+
+def make_networks_query(pathway_id):
+    uri = config.get_config()["mutations_db"]["uri"]
+    linked_networks = [entry[1] for entry in kegg_helper.kegg_link("network", pathway_id)]
+
+    output = []
+    for network_id in linked_networks:
+        output.append(mongo_helper.get_network_entry(network_id, uri)["query"])
+
+    return output
+

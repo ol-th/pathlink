@@ -8,4 +8,4 @@ curl https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variation_allele.txt
 gunzip clinvar_variation_allele.txt.gz
 curl https://civicdb.org/downloads/nightly/nightly-VariantSummaries.tsv --output civic_variant_summary.tsv
 curl https://civicdb.org/downloads/nightly/nightly-ClinicalEvidenceSummaries.tsv --output clinvar_evidence_summary.tsv
-python3 update_dbs.py
+python3 update_dbs.py mongodb://127.0.0.1:27017

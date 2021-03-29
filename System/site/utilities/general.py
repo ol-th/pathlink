@@ -20,9 +20,9 @@ def pathways_given_product(protein_name):
             kegg_pathways_list.append(protein_info_kegg[index][12:].split("  "))
         index += 1
 
-    pc_pathways_list = pathwaycommons_helper.pathways_given_product(protein_id)
+    # pc_pathways_list = pathwaycommons_helper.pathways_given_product(protein_id)
 
-    return kegg_pathways_list, pc_pathways_list
+    return kegg_pathways_list
 
 
 def pathways_given_pathway(pathway_name):
