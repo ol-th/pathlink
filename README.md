@@ -15,6 +15,8 @@ The purpose of this project is to provide an API and graphical interface which p
 * COSMIC
 * STRING
 
+The system will also provide an API to produce comprehensive Neo4j representations of all KEGG pathways - along with mechanisms for enrichment and other analysis.
+
 ## Structure
 
 ### Preliminaries
