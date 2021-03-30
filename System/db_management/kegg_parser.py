@@ -2,6 +2,7 @@ import requests
 import sys
 import pymongo
 import time
+import re
 
 
 def new_gene_dict(input_id, input_name):
@@ -143,7 +144,30 @@ def upload_nets(nets, collection):
     collection.insert_many(network_dicts)
 
 
-def get_all_relevant_drugs():
+def get_drugs_list():
+    r = requests.get("http://rest.kegg.jp/list/drug")
+    if r.status_code != 200:
+        return None
+    if r.text == "":
+        return None
+    lines = r.text.split("\n")[:-1]
+    output = []
+    for line in lines:
+        info = line.split("\t")
+        drug_id = info[0]
+        drug_names = info[1]
+        names_list = []
+        for name in drug_names.split(";"):
+            names_list.append(re.sub(r"\([^()]*\)", "", name).strip())
+        output.append({
+            "kegg_id": drug_id,
+            "names": names_list
+        })
+
+    return output
+
+
+def get_all_relevant_drug_links():
     output = []
 
     # Pathways
@@ -164,7 +188,7 @@ def get_all_relevant_drugs():
         pathways_to_drugs[pathway].append(drug)
 
     for key in pathways_to_drugs.keys():
-        output.append({"target": key, "drugs": pathways_to_drugs[key]})
+        output.append({"target": key.replace("map", "hsa"), "drugs": pathways_to_drugs[key]})
 
     time.sleep(3)
     # Genes
@@ -193,45 +217,53 @@ def get_all_relevant_drugs():
 def main():
     database_url = sys.argv[1]
     client = pymongo.MongoClient(database_url)
-    db = client["networks"]
-    kegg_networks_collection = db["kegg_networks"]
-
-    if kegg_networks_collection.count() > 0:
-        print("Dropping networks collection...")
-        kegg_networks_collection.drop()
-
-    print("Importing network ids...")
-    networks = list(get_all_relevant_networks())
-    print("Importing " + str(len(networks)) + " networks.")
-    time.sleep(3)
-
-    network_index = 0
-
-    while network_index + 10 <= len(networks):
-        this_10 = networks[network_index:network_index + 10]
-        nets = get_network_entries(this_10)
-
-        print("Adding networks " + str(network_index) + " - " + str(network_index + 10))
-        upload_nets(nets, kegg_networks_collection)
-        time.sleep(3)
-
-        network_index += 10
-
-    last_nets_index = network_index
-    last_nets = networks[last_nets_index:]
-    print("Adding last networks...")
-    upload_nets(last_nets, kegg_networks_collection)
+    # db = client["networks"]
+    # kegg_networks_collection = db["kegg_networks"]
+    #
+    # if kegg_networks_collection.count() > 0:
+    #     print("Dropping networks collection...")
+    #     kegg_networks_collection.drop()
+    #
+    # print("Importing network ids...")
+    # networks = list(get_all_relevant_networks())
+    # print("Importing " + str(len(networks)) + " networks.")
+    # time.sleep(3)
+    #
+    # network_index = 0
+    #
+    # while network_index + 10 <= len(networks):
+    #     this_10 = networks[network_index:network_index + 10]
+    #     nets = get_network_entries(this_10)
+    #
+    #     print("Adding networks " + str(network_index) + " - " + str(network_index + 10))
+    #     upload_nets(nets, kegg_networks_collection)
+    #     time.sleep(3)
+    #
+    #     network_index += 10
+    #
+    # last_nets_index = network_index
+    # last_nets = networks[last_nets_index:]
+    # print("Adding last networks...")
+    # upload_nets(last_nets, kegg_networks_collection)
 
     db = client["drugs"]
-    kegg_drugs_collection = db["kegg_drug_links"]
-    if kegg_drugs_collection.count() > 0:
-        print("Dropping networks collection...")
+    kegg_drugs_collection = db["kegg_drugs"]
+    if kegg_drugs_collection.count_documents({}) > 0:
+        print("Dropping drugs collection...")
         kegg_drugs_collection.drop()
 
+    print("Updating drugs collection...")
+    drugs = get_drugs_list()
+    kegg_drugs_collection.insert_many(drugs)
+
+    kegg_drug_links_collection = db["kegg_drug_links"]
+    if kegg_drug_links_collection.count_documents({}) > 0:
+        print("Dropping drug links collection...")
+        kegg_drug_links_collection.drop()
+
     print("Updating drugs links...")
-    drugs = get_all_relevant_drugs()
-    for drug in drugs:
-        kegg_drugs_collection.insert_one(drug)
+    drugs = get_all_relevant_drug_links()
+    kegg_drug_links_collection.insert_many(drugs)
 
 
 if __name__ == '__main__':

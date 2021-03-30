@@ -25,5 +25,19 @@ def variant_evidence(gene, variant, uri):
 def get_network_entry(net_id, uri):
     client = pymongo.MongoClient(uri)
     db = client["networks"]
-    evidence_summaries_collection = db["kegg_networks"]
-    return evidence_summaries_collection.find_one({"id": net_id})
+    networks_collection = db["kegg_networks"]
+    return networks_collection.find_one({"id": net_id})
+
+
+def get_drug_links(target_id, uri):
+    client = pymongo.MongoClient(uri)
+    db = client["drugs"]
+    drug_links_collection = db["kegg_drug_links"]
+    return drug_links_collection.find_one({"target": target_id})
+
+
+def get_drug_names(kegg_id, uri):
+    client = pymongo.MongoClient(uri)
+    db = client["drugs"]
+    drug_links_collection = db["kegg_drugss"]
+    return drug_links_collection.find_one({"kegg_id": kegg_id})

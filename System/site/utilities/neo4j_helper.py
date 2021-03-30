@@ -137,3 +137,49 @@ def make_networks_query(pathway_id):
 
     return output
 
+
+def make_drugs_query(pathway):
+    uri = config.get_config()["mutations_db"]["uri"]
+    drug_connections = {}
+    linked_drugs = mongo_helper.get_drug_links(pathway.name, uri)
+    if linked_drugs is not None:
+        linked_drugs = linked_drugs["drugs"]
+        for drug in linked_drugs:
+            if drug not in drug_connections.keys():
+                drug_connections[drug] = []
+            drug_connections[drug].append([True, pathway.name])
+
+    for gene in pathway.genes:
+        gene_ids = gene.name.split(" ")
+        for gene_id in gene_ids:
+            linked_drugs = mongo_helper.get_drug_links(gene_id, uri)
+            if linked_drugs is not None:
+                linked_drugs = linked_drugs["drugs"]
+                for drug in linked_drugs:
+                    if drug not in drug_connections.keys():
+                        drug_connections[drug] = []
+                    drug_connections[drug].append([False, gene_id])
+
+    query = "CREATE "
+    current_drug_id = 0
+    current_target_id = 0
+    for drug in drug_connections.keys():
+        targets = drug_connections[drug]
+
+        query += "(b" + str(current_drug_id) + ":Drug {kegg_ids: [\"" + drug + "\"]}),"
+
+        for target in targets:
+            # It's a pathway
+            if target[0]:
+                query += "(a" + str(current_target_id) + ":Map { kegg_ids: [\"" + target[1] + "\"]}),"
+                query += "(a" + str(current_target_id) + ")-[:Targeted]->(b" + str(current_drug_id) + "),"
+                current_target_id += 1
+            # It's a gene
+            else:
+                query += "(a" + str(current_target_id) + ":Gene { kegg_ids: [\"" + target[1] + "\"]}),"
+                query += "(a" + str(current_target_id) + ")-[:Targeted]->(b" + str(current_drug_id) + "),"
+                current_target_id += 1
+
+        current_drug_id += 1
+
+    return query[:-1]

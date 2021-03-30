@@ -26,6 +26,7 @@ def pathways_given_gene(gene_name):
         "pc_pathways": []
     }
 
+
 # TODO: function_enrichment_gene_list
 # TODO: functional_enrichment_gene
 # TODO: functional_enrichment_gene_pathway
@@ -115,12 +116,14 @@ def neo4j_pathway(identifier, options=None):
     if "networks" in options:
         for query in neo4j_helper.make_networks_query(accession):
             pipeline.append(query)
+    if "drugs" in options:
+        pipeline.append(neo4j_helper.make_drugs_query(pathway))
 
-    pipeline.append("MATCH (n1),(n2) WHERE ANY (x IN n1.name WHERE x IN n2.name) and id(n1) < id(n2) "
-                "WITH [n1,n2] as ns CALL apoc.refactor.mergeNodes(ns, {properties:\"combine\", mergeRels:true}) "
-                "YIELD node RETURN node")
-    pipeline.append("MATCH (n1:Variant),(n2:Variant) WHERE n1.variant = n2.variant and id(n1) < id(n2)"
-                "WITH [n1,n2] as ns CALL apoc.refactor.mergeNodes(ns, {properties:\"combine\", mergeRels:true}) "
-                "YIELD node RETURN node")
+    pipeline.append("MATCH (n1),(n2) WHERE ANY (x IN n1.kegg_ids WHERE x IN n2.kegg_ids) and id(n1) <> id(n2) "
+                    "WITH [n1,n2] as ns CALL apoc.refactor.mergeNodes(ns, {properties:\"combine\", mergeRels:true}) "
+                    "YIELD node RETURN node")
+    pipeline.append("MATCH (n1:Variant),(n2:Variant) WHERE n1.variant = n2.variant and id(n1) <> id(n2) "
+                    "WITH [n1,n2] as ns CALL apoc.refactor.mergeNodes(ns, {properties:\"combine\", mergeRels:true}) "
+                    "YIELD node RETURN node")
 
     return {"neo4j_query_pipeline": pipeline}
