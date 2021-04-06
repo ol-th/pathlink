@@ -56,7 +56,7 @@ def pathways_given_product(uniprot_id):
             FILTER regex(?eref, "^http://identifiers.org/uniprot/""" + uniprot_id + """$")
 
             ?pathway rdf:type bp:Pathway.
-            ?interaction bp:participant ?protein.
+            ?interaction bp:participant|bp:left|bp:right ?protein.
             ?pathway bp:pathwayComponent ?interaction;
                      bp:displayName ?pathwayName;
                      bp:comment ?comment.
@@ -87,7 +87,7 @@ def pathways_given_product(uniprot_id):
     return output
 
 
-def pathway_given_pathway(name):
+def pathway_parents(name):
     sparql = SPARQLWrapper("http://rdf.pathwaycommons.org/sparql/")
 
     query = """
@@ -99,17 +99,18 @@ def pathway_given_pathway(name):
                      bp:displayName ?pname.
             FILTER regex(?pname, ".*""" + name + """.*", "i")
 
-        {
-            
-            ?pathwayParent bp:pathwayComponent ?pathway;
-                           bp:displayName ?parentpname;
-                           bp:comment ?comment.
-        }UNION{
-            ?pathway bp:controlled ?pathwayParent.
-            ?pathwayParent bp:pathwayComponent ?pathway;
-                           bp:displayName ?parentpname;
-                           bp:comment ?comment.
-        }
+            {
+                
+                ?pathwayParent bp:pathwayComponent ?pathway;
+                               bp:displayName ?parentpname;
+                               bp:comment ?comment.
+                               
+            }UNION{
+                ?pathwayParent bp:controlled ?pathway.
+                ?pathwayParent bp:pathwayComponent ?pathway;
+                               bp:displayName ?parentpname;
+                               bp:comment ?comment.
+            }
         }
         LIMIT 200"""
 

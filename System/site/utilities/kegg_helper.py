@@ -39,8 +39,7 @@ def kegg_pathway_participation(gene_identifier, pathway_identifier):
     return gene_identifier in gene_names
 
 
-def kegg_pathway_desc(path_id):
-    info = kegg_info(path_id)
+def kegg_pathway_desc(info):
     if info is None:
         return None
     for line in info:
@@ -48,9 +47,18 @@ def kegg_pathway_desc(path_id):
             return line.replace("DESCRIPTION", "").strip()
 
 
-def kegg_info(id):
+def kegg_get_name(info):
+    if info is None:
+        return None
+    for line in info:
+        if "NAME" in line:
+            # Looks horrible but stops anything too specific
+            return line.replace("NAME", "").strip().split(" - ")[0].strip()
 
-    r = requests.get("http://rest.kegg.jp/get/" + id)
+
+def kegg_info(identifier):
+
+    r = requests.get("http://rest.kegg.jp/get/" + identifier)
     if r.status_code != 200:
         return None
     if r.text == "":
@@ -99,4 +107,22 @@ def kegg_link(arg1, arg2):
 
 def get_network_entry(name):
     return kegg_search("NETWORK", name)
+
+
+def get_gene_pathways(protein_info_kegg):
+    index = 0
+    in_pathways = False
+    kegg_pathways_list = []
+
+    # This wrangles all of the pathway data into a 2d list of format [[accession, description], ...]
+    while index < len(protein_info_kegg):
+        if not in_pathways and "PATHWAY" in protein_info_kegg[index]:
+            in_pathways = True
+            kegg_pathways_list.append(protein_info_kegg[index][12:].split("  "))
+        elif in_pathways:
+            if not protein_info_kegg[index].startswith(" "):
+                break
+            kegg_pathways_list.append(protein_info_kegg[index][12:].split("  "))
+        index += 1
+    return kegg_pathways_list
 

@@ -71,7 +71,7 @@ def get_pathway_results(identifier, name):
     output_list.append(gene_list_text)
     # Finding known parents of the pathway (using pathway commons)
     parents_text = "<h2>Known parent pathways:</h2>"
-    parents = pathwaycommons_helper.pathway_given_pathway(name)
+    parents = pathwaycommons_helper.pathway_parents(name)
     for parent in parents:
         parents_text += "<p>" + parent[0] + "</p>"
 
@@ -126,7 +126,6 @@ def get_product_results(gene):
         for variant in variants:
             output_list.append("<p>" + variant["variant"] + "</p>")
 
-    # TODO: Keep this but improve functional enrichment stuff - use API to generate list of first/second shell
     output_list.append(
         "<p><h2><a href=\"/enrichment?genes=" + gene.uniprot_id + "\">Functional enrichment</a></h2></p>")
     return output_list
@@ -144,7 +143,6 @@ def pathway_product_query(pathway_query, product_query):
         results = kegg_helper.kegg_search("PATHWAY", sanitised_query)
         # If there are results
         if len(results) > 0:
-            # TODO: could change this to let the user choose
             pathway_identifier = results[0].replace("map", "hsa")
 
     # In this case it's an identifier
@@ -189,10 +187,24 @@ def get_pathway_product_results(gene, pathway_name, pathway_identifier):
     # Does the gene participate in the pathway?
     output_list.append("<p>KEGG: " + str(participation_verdict) + "</p>")
 
-    # Generate functional enrichment (currently uses embedded string stuff)
-    enrichment_names = interaction_info["enrichment_names"]
-    output_list.append("<p><h2><a href=\"/enrichment?genes=" + enrichment_names
-                       + "\">Functional enrichment</a></h2></p>")
+    # Functional Enrichment
+    output_list.append("<p><h2>Functional Enrichment</h2></p>")
+    output_list.append("<p><h3>Direct partners</h3></p>")
+
+    for dest in interaction_info["direct"]:
+            output_list.append("<p>" + dest + "</p>")
+
+    output_list.append("<p><h3>Indirect partners</h3></p>")
+    indirect = interaction_info["indirect"]
+    if len(indirect) > 5:
+        for dest in indirect.keys():
+            via = indirect[dest]
+            if len(via) > 0:
+                if len(via) > 5:
+                    via = list(indirect[dest])[:5]
+                via = ", ".join(via)
+                output_list.append("<p>" + dest + " via " + via + "</p>")
+
     return output_list
 
 
@@ -220,9 +232,11 @@ def product_product_query(query1, query2):
     return ["No results found - have you checked for typos? The query may be malformed."]
 
 
+# TODO: FIX THIS
+
 def get_product_product_results(gene1, gene2):
-    pathways1 = api.pathways_given_gene(gene1.name)
-    pathways2 = api.pathways_given_gene(gene2.name)
+    pathways1 = api.get_gene(gene1.name)
+    pathways2 = api.get_gene(gene2.name)
 
     # pathway[0] contains its accession ID
     accession_numbers2 = [pathway[0] for pathway in pathways2["kegg_pathways"]]

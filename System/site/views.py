@@ -29,13 +29,15 @@ def enrichment():
 @app.route('/api/pathway', methods=["GET"])
 def pathway_api():
     identifier = request.args.get("id")
-    return jsonify(api.get_pathway_info(identifier))
+    options = request.args.get("options")
+    return jsonify(api.get_pathway(identifier, options=options))
 
 
-@app.route('/api/pathways_from_participant', methods=["GET"])
-def pathways_from_participant_api():
+@app.route('/api/gene', methods=["GET"])
+def gene_api():
     name = request.args.get("name")
-    return jsonify(api.pathways_given_gene(name))
+    options = request.args.get("options")
+    return jsonify(api.get_gene(name=name, options=options))
 
 
 @app.route('/api/pathway_gene_interaction', methods=["GET"])
@@ -49,18 +51,6 @@ def pathway_gene_interaction_api():
                                                 gene_kegg=gene_kegg, gene_uniprot=gene_uniprot))
 
 
-@app.route('/api/variant', methods=["GET"])
-def variant_api():
-    gene_name = request.args.get("gene_name")
-    variant_name = request.args.get("variant")
-    if all(v is not None for v in [gene_name, variant_name]):
-        result = api.gene_variant_data(gene_name, variant_name)
-        result_list = list(result)
-        output = {"results": json_util.dumps(result_list)}
-        return jsonify(output)
-    return ""
-
-
 @app.route('/api/variant_evidence', methods=["GET"])
 def variant_evidence_api():
     gene_name = request.args.get("gene_name")
@@ -71,6 +61,16 @@ def variant_evidence_api():
         output = {"results": json_util.dumps(result_list)}
         return jsonify(output)
     return ""
+
+
+@app.route('/api/functional_enrichment', methods=["GET"])
+def functional_enrichment_api():
+    gene_list = request.args.get("genes").split("+")
+    direct, indirect = api.functional_enrichment(gene_list)
+    return jsonify({
+        "direct": direct,
+        "indirect": indirect
+    })
 
 
 @app.route('/api/pathway_to_cypher', methods=["GET"])

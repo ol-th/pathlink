@@ -1,35 +1,64 @@
-from .utilities import kegg_helper, general, neo4j_helper, mongo_helper, config
+from .utilities import kegg_helper, neo4j_helper, mongo_helper, config, pathwaycommons_helper, string_helper
 from .utilities.classes import Gene
 from bson import json_util
 import configparser
 
 
-# Returns pathway name, link, participants
-def get_pathway_info(identifier):
-    pathway = kegg_helper.kegg_get_pathway(identifier)
-    description = kegg_helper.kegg_pathway_desc(identifier)
-    # Outputs tuple (link, name)
-    gene_tuple = kegg_helper.kegg_gene_list(pathway.genes)
-    return {
-        "pathway_name": pathway.name,
-        "pathway_description": description,
-        "pathway_link": pathway.link,
-        "gene_list": gene_tuple
-    }
-
-
-# Returns pathways that gene participates in
-def pathways_given_gene(gene_name):
-    pathways = general.pathways_given_product(gene_name)
-    return {
-        "kegg_pathways": pathways,
-        "pc_pathways": []
-    }
-
-
 # TODO: function_enrichment_gene_list
 # TODO: functional_enrichment_gene
 # TODO: functional_enrichment_gene_pathway
+
+
+# Returns pathway name, link, participants
+def get_pathway(identifier, options=None):
+    if options is None:
+        options = ""
+    pathway = kegg_helper.kegg_get_pathway(identifier)
+    info = kegg_helper.kegg_info(identifier)
+    name = kegg_helper.kegg_get_name(info)
+    description = kegg_helper.kegg_pathway_desc(info)
+    # Outputs tuple (link, name)
+    gene_tuple = kegg_helper.kegg_gene_list(pathway.genes)
+    pathway_parents = pathwaycommons_helper.pathway_parents(name)
+    output_dict = {
+        "name": name,
+        "kegg_id": pathway.name,
+        "pathway_description": description,
+        "pathway_link": pathway.link,
+        "gene_list": gene_tuple,
+    }
+
+    if "parents" in options:
+        output_dict["pc_pathway_parents"] = pathway_parents
+
+    return output_dict
+
+
+# Returns pathways that gene participates in
+def get_gene(name=None, uniprot_id=None, options=None):
+    if name is None and uniprot_id is None:
+        return {}
+    if options is None:
+        options = ""
+    gene = Gene(name=name, uniprot_id=uniprot_id)
+    gene_kegg_entry = kegg_helper.kegg_info(gene.kegg_id)
+    kegg_pathways = kegg_helper.get_gene_pathways(gene_kegg_entry)
+    uri = config.get_config()["mutations_db"]["uri"]
+    output_dict = {
+        "name": gene.name,
+        "functions": gene.functions,
+        "kegg_id": gene.kegg_id,
+        "uniprot_id": gene.uniprot_id,
+        "kegg_pathways": kegg_pathways
+    }
+
+    if "pc_pathways" in options:
+        pc_pathways = pathwaycommons_helper.pathways_given_product(gene.uniprot_id)
+        output_dict["pc_pathways"] = pc_pathways
+
+    if "variants" in options:
+        variants = json_util.dumps(mongo_helper.get_mutations(gene.name, uri))
+        output_dict["variants"] = variants
 
 
 # Returns interaction data between pathway and gene
@@ -48,21 +77,15 @@ def pathway_gene_interaction(pathway_name, pathway_kegg_id=None, input_gene=None
 
     participation_verdict = kegg_helper.kegg_pathway_participation(gene.kegg_id, kegg_pathway_id)
     pathway = kegg_helper.kegg_get_pathway(kegg_pathway_id)
-    participant_ids = [gene.name for gene in pathway.genes]
-    enrichment_names = gene.uniprot_id + " "
-    for gene in participant_ids:
-        enrichment_names += gene.split(" ")[0] + " "
-    enrichment_names = enrichment_names[:-1]
+    participant_ids = [gene.name.split(" ")[0] for gene in pathway.genes]
+    participant_ids.append(gene.name)
+    direct, indirect = functional_enrichment(participant_ids)
 
     return {
         "participation_verdict": participation_verdict,
-        "enrichment_names": enrichment_names
+        "direct": direct,
+        "indirect": indirect
     }
-
-
-def gene_variants(gene_name):
-    uri = config.get_config()["mutations_db"]["uri"]
-    return mongo_helper.get_mutations(gene_name, uri)
 
 
 # Returns mutation data from mongo db given gene, variant name
@@ -78,10 +101,12 @@ def variant_evidence(gene, variant):
     return mongo_helper.variant_evidence(gene, variant, db_config["mutations_db"]["uri"])
 
 
+def functional_enrichment(gene_list):
+    return string_helper.get_relevant_links(gene_list)
+
+
 # Returns a cypher query to create a Neo4j representation of an identified pathway
 # Expected format: hsa:<id>
-# TODO: Add mutation support
-# TODO: Add functional enrichment support? Need to complete API stuff first
 def neo4j_pathway(identifier, options=None):
     if options is None:
         options = ""
