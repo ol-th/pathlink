@@ -191,19 +191,26 @@ def get_pathway_product_results(gene, pathway_name, pathway_identifier):
     output_list.append("<p><h2>Functional Enrichment</h2></p>")
     output_list.append("<p><h3>Direct partners</h3></p>")
 
-    for dest in interaction_info["direct"]:
-            output_list.append("<p>" + dest + "</p>")
+    output_list.append("<p><h2>Functional Enrichment</h2></p>")
 
-    output_list.append("<p><h3>Indirect partners</h3></p>")
+    direct = interaction_info["direct"]
     indirect = interaction_info["indirect"]
-    if len(indirect) > 5:
-        for dest in indirect.keys():
-            via = indirect[dest]
+
+    source = gene.name
+    if source in direct.keys():
+        output_list.append("<p><h3>Direct partners</h3></p>")
+        for dest in direct[source]:
+            output_list.append("<p>" + source + " -> " + dest + "</p>")
+
+    if source in indirect.keys():
+        output_list.append("<p><h3>Indirect partners</h3></p>")
+        for dest in indirect[source].keys():
+            via = indirect[source][dest]
             if len(via) > 0:
                 if len(via) > 5:
-                    via = list(indirect[dest])[:5]
+                    via = via[:5]
                 via = ", ".join(via)
-                output_list.append("<p>" + dest + " via " + via + "</p>")
+                output_list.append("<p>" + source + " -> " + dest + " via " + via + "</p>")
 
     return output_list
 
@@ -235,17 +242,19 @@ def product_product_query(query1, query2):
 # TODO: FIX THIS
 
 def get_product_product_results(gene1, gene2):
-    pathways1 = api.get_gene(gene1.name)
-    pathways2 = api.get_gene(gene2.name)
+    gene1_info = api.get_gene(uniprot_id=gene1.uniprot_id)
+    gene2_info = api.get_gene(uniprot_id=gene2.uniprot_id)
+    pathways1 = gene1_info["kegg_pathways"]
+    pathways2 = gene2_info["kegg_pathways"]
 
     # pathway[0] contains its accession ID
-    accession_numbers2 = [pathway[0] for pathway in pathways2["kegg_pathways"]]
+    accession_numbers2 = [pathway[0] for pathway in pathways2]
     mutual_pathways = []
-    for pathway in pathways1["kegg_pathways"]:
+    for pathway in pathways1:
         if pathway[0] in accession_numbers2:
             mutual_pathways.append(pathway)
 
-    output = [
+    output_list = [
         "<p><h2> Entries for " + gene1.name + ": </h2></p>",
         "<p><a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene1.kegg_id + "\">KEGG</a></p>",
         "<p><a href=\"http://www.uniprot.org/uniprot/" + gene1.uniprot_id + "\">UniProt</a></p>",
@@ -256,16 +265,33 @@ def get_product_product_results(gene1, gene2):
     ]
 
     if len(mutual_pathways) == 0:
-        output.append("<p>None</p>")
+        output_list.append("<p>None</p>")
     else:
         for pathway in mutual_pathways:
             line = "<p><a href=\"http://www.genome.jp/dbget-bin/www_bget?" + pathway[0] + "\">" + pathway[1] + "</a><p>"
-            output.append(line)
+            output_list.append(line)
 
-    output.append("<p><h2><a href=\"/enrichment?genes=" + gene1.name + " " + gene2.name
-                  + "\">Functional enrichment</a></h2></p>")
+    # Functional Enrichment
+    direct, indirect = api.functional_enrichment([gene1.name, gene2.name])
+    output_list.append("<p><h2>Functional Enrichment</h2></p>")
+    output_list.append("<p><h3>Direct partners</h3></p>")
 
-    return output
+    for source in direct.keys():
+        for dest in direct[source]:
+            output_list.append("<p>" + source + " -> " + dest + "</p>")
+
+    output_list.append("<p><h3>Indirect partners</h3></p>")
+    for source in indirect.keys():
+        for dest in indirect[source].keys():
+            via = indirect[source][dest]
+            print(via)
+            if len(via) > 0:
+                if len(via) > 5:
+                    via = via[:5]
+                via = ", ".join(via)
+                output_list.append("<p>" + source + " -> " + dest + " via " + via + "</p>")
+
+    return output_list
 
 
 # Product-variant interaction query - returns clinical significance etc

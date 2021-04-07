@@ -60,6 +60,8 @@ def get_gene(name=None, uniprot_id=None, options=None):
         variants = json_util.dumps(mongo_helper.get_mutations(gene.name, uri))
         output_dict["variants"] = variants
 
+    return output_dict
+
 
 # Returns interaction data between pathway and gene
 def pathway_gene_interaction(pathway_name, pathway_kegg_id=None, input_gene=None, gene_uniprot=None, gene_kegg=None,

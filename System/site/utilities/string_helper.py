@@ -23,6 +23,16 @@ def get_functional_network(gene_list):
             links_dict[source] = []
         if dest not in links_dict[source]:
             links_dict[source].append(dest)
+
+    for line in r.text.split("\n")[:-1]:
+        entries = line.split("\t")
+        source = entries[3]
+        dest = entries[2]
+        if source not in links_dict.keys():
+            links_dict[source] = []
+        if dest not in links_dict[source]:
+            links_dict[source].append(dest)
+
     return links_dict
 
 

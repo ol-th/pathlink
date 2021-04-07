@@ -63,7 +63,6 @@ def get_uniprot_identifier(name):
         print("Empty or invalid XML search result. Trace: ")
         print(e)
         return None
-
     return xml_root[0][0].text  # Identifier for highest search result
 
 
