@@ -43,6 +43,11 @@ form.example::after {
   clear: both;
   display: table;
 }
+
+div.scheme {
+  padding-top: 20px;
+  text-align: center;
+}
 </style>
 </head>
 <body>
@@ -51,6 +56,14 @@ form.example::after {
   <h2 style="text-align: center;">Search</h2> <input type="text" placeholder="Query..." name="search">
   <button type="submit"><i class="fa fa-search"></i></button>
 </form>
+
+<div class="scheme">
+<p>Searches should take the form of "Entity" or "Entity;Entity"</p>
+<p>Entities are typed, accepting types: gene, pathway/path, variant</p>
+<p>Two entities results in the link between those two entities. Examples:</p>
+<p>"gene:PTEN"</p>
+<p>"gene:PTEN;path:homologous recombination"</p>
+</div>
 
 </body>
 </html>

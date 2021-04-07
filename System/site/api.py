@@ -57,8 +57,9 @@ def get_gene(name=None, uniprot_id=None, options=None):
         output_dict["pc_pathways"] = pc_pathways
 
     if "variants" in options:
-        variants = json_util.dumps(mongo_helper.get_mutations(gene.name, uri))
-        output_dict["variants"] = variants
+        variants_cursor = mongo_helper.get_mutations(gene.name, uri)
+        variants_list = [json_util.dumps(result) for result in variants_cursor]
+        output_dict["variants"] = variants_list
 
     return output_dict
 

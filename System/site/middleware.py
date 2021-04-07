@@ -1,5 +1,6 @@
 from .utilities import kegg_helper, pathwaycommons_helper, mongo_helper
 from .utilities.classes import Gene
+from bson import json_util
 from . import api
 
 
@@ -59,7 +60,7 @@ def pathway_query(query_list):
 
 def get_pathway_results(identifier, name):
     # Keys: pathway_name, pathway_link, gene_list [link, name]
-    pathway_info = api.get_pathway_info(identifier)
+    pathway_info = api.get_pathway(identifier)
 
     # Adding the pathway link
     output_list = ["<a href=\"" + pathway_info["pathway_link"] + "\"><h2>KEGG entry for pathway</h2></a>",
@@ -105,29 +106,27 @@ def get_product_results(gene):
             output_list.append("<p>" + str(index + 1) + ": " + function + "</p>")
 
     # Retrieving pathways that it participates in
-    pathways_dict = api.pathways_given_gene(gene.name)
-    if len(pathways_dict["kegg_pathways"]) > 0:
+    gene_data = api.get_gene(gene.name, options="variants+pc_pathways")
+    if len(gene_data["kegg_pathways"]) > 0:
         output_list.append("<h2>[KEGG] Participant in:</h2>")
-        for i in pathways_dict["kegg_pathways"]:
+        for i in gene_data["kegg_pathways"]:
             line = """
             <p><a href=\"http://www.genome.jp/dbget-bin/www_bget?""" + i[0] + """\">""" + i[1] + """</a></p>
             """
             output_list.append(line)
-    if len(pathways_dict["pc_pathways"]) > 0:
+    if len(gene_data["pc_pathways"]) > 0:
         output_list.append("<h2>[Pathway Commons] Participant in:</h2>")
-        for i in pathways_dict["pc_pathways"]:
+        for i in gene_data["pc_pathways"]:
             line = """
                     <p>""" + i[0] + """</a></p>
                     """
             output_list.append(line)
-    variants = api.gene_variants(gene.name)
-    if variants.count() > 0:
+    variants = [json_util.loads(result) for result in gene_data["variants"]]
+    if len(variants) > 0:
         output_list.append("<p><h2>Variants</h2></p>")
         for variant in variants:
             output_list.append("<p>" + variant["variant"] + "</p>")
 
-    output_list.append(
-        "<p><h2><a href=\"/enrichment?genes=" + gene.uniprot_id + "\">Functional enrichment</a></h2></p>")
     return output_list
 
 
@@ -238,8 +237,6 @@ def product_product_query(query1, query2):
 
     return ["No results found - have you checked for typos? The query may be malformed."]
 
-
-# TODO: FIX THIS
 
 def get_product_product_results(gene1, gene2):
     gene1_info = api.get_gene(uniprot_id=gene1.uniprot_id)
