@@ -1,4 +1,5 @@
-from .utilities import kegg_helper, neo4j_helper, mongo_helper, config, pathwaycommons_helper, string_helper
+from .utilities import kegg_helper, neo4j_helper, mongo_helper, config, pathwaycommons_helper, string_helper,\
+    ensembl_helper
 from .utilities.classes import Gene
 from bson import json_util
 import configparser
@@ -61,6 +62,10 @@ def get_gene(name=None, uniprot_id=None, options=None):
         variants_list = [json_util.dumps(result) for result in variants_cursor]
         output_dict["variants"] = variants_list
 
+    if "drugs" in options:
+        drugs = mongo_helper.get_drug_links(gene.kegg_id, uri)
+        output_dict["drugs"] = drugs["drugs"]
+
     return output_dict
 
 
@@ -94,7 +99,17 @@ def pathway_gene_interaction(pathway_name, pathway_kegg_id=None, input_gene=None
 # Returns mutation data from mongo db given gene, variant name
 def gene_variant_data(gene, variant):
     db_config = config.get_config()
-    return mongo_helper.get_mutation_data(gene, variant, db_config["mutations_db"]["uri"])
+    results = mongo_helper.get_mutation_data(gene, variant, db_config["mutations_db"]["uri"])
+
+    if results is None:
+        return {}
+
+    effects = ensembl_helper.get_effect_predictions("rs" + str(results["RS# (dbSNP)"]))
+    results = json_util.dumps(results)
+    return {
+        "results": results,
+        "ensembl_vep": effects
+    }
 
 
 # Returns any evidence stored in evidence db

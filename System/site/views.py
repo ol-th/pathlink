@@ -40,6 +40,18 @@ def gene_api():
     return jsonify(api.get_gene(name=name, options=options))
 
 
+@app.route('/api/variant', methods=["GET"])
+def variant_api():
+    gene_name = request.args.get("gene_name")
+    variant_name = request.args.get("variant")
+    if all(v is not None for v in [gene_name, variant_name]):
+        result = api.gene_variant_data(gene_name, variant_name)
+        result_list = list(result)
+        output = {"results": json_util.dumps(result_list)}
+        return jsonify(api.gene_variant_data(gene_name, variant_name))
+    return ""
+
+
 @app.route('/api/pathway_gene_interaction', methods=["GET"])
 def pathway_gene_interaction_api():
     pathway_name = request.args.get("pathway_name")
@@ -56,10 +68,7 @@ def variant_evidence_api():
     gene_name = request.args.get("gene_name")
     variant_name = request.args.get("variant")
     if all(v is not None for v in [gene_name, variant_name]):
-        result = api.variant_evidence(gene_name, variant_name)
-        result_list = list(result)
-        output = {"results": json_util.dumps(result_list)}
-        return jsonify(output)
+        return jsonify(api.variant_evidence(gene_name, variant_name))
     return ""
 
 

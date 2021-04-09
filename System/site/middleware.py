@@ -309,12 +309,12 @@ def product_variant_query(gene_query, variant_query):
 
 
 def get_product_variant_query(gene, variant):
-    gene_info_dicts = api.gene_variant_data(gene.name, variant)
+    gene_info_dict = api.gene_variant_data(gene.name, variant)
     evidence_info_dicts = api.variant_evidence(gene.name, variant)
-    if gene_info_dicts.count() == 0:
+    if gene_info_dict is None:
         return ["Variant/mutation not found - malformed query?"]
 
-    first_variant = gene_info_dicts[0]
+    first_variant = json_util.loads(gene_info_dict["results"])
     output = ["<p><h2>" + gene.name + ":</h2></p>"
               "<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene.kegg_id +
               "\">KEGG</a>",
@@ -327,6 +327,6 @@ def get_product_variant_query(gene, variant):
               "<p>Potential drugs:</p>",
               ]
     for evidence in evidence_info_dicts:
-        output.append("<p>" + evidence["drugs"] + " - <a href=\"" + evidence["evidence_civic_url"] +
+        output.append("<p>" + str(evidence["drugs"]) + " - <a href=\"" + str(evidence["evidence_civic_url"]) +
                       "\">Evidence</a></p>")
     return output
