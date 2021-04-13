@@ -1,4 +1,4 @@
-from .utilities import kegg_helper, pathwaycommons_helper, mongo_helper
+from .utilities import kegg_helper, pathwaycommons_helper
 from .utilities.classes import Gene
 from bson import json_util
 from . import api
@@ -36,7 +36,6 @@ def pathway_query(query_list):
     # Splicing out the pathway: component of the query
     query = query_list[0].split(":")[1:]
     # Query is a name of pathway
-    identifier = ""
     if len(query) == 1:
         # Sanitise for use in HTTP
         sanitised_query = query[0].replace(" ", "+")
@@ -130,8 +129,8 @@ def get_product_results(gene):
     return output_list
 
 
-def pathway_product_query(pathway_query, product_query):
-    pathway_list = pathway_query.split(":")[1:]
+def pathway_product_query(pathway_input, product_input):
+    pathway_list = pathway_input.split(":")[1:]
     # Query is a name of pathway
     pathway_name = None
     pathway_identifier = None
@@ -151,7 +150,7 @@ def pathway_product_query(pathway_query, product_query):
         if info is not None:
             pathway_name = info[1][12:]
 
-    product_list = product_query.split(":")[1:]
+    product_list = product_input.split(":")[1:]
     gene = None
 
     if len(product_list) == 1:

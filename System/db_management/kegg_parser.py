@@ -217,34 +217,34 @@ def get_all_relevant_drug_links():
 def main():
     database_url = sys.argv[1]
     client = pymongo.MongoClient(database_url)
-    # db = client["networks"]
-    # kegg_networks_collection = db["kegg_networks"]
-    #
-    # if kegg_networks_collection.count() > 0:
-    #     print("Dropping networks collection...")
-    #     kegg_networks_collection.drop()
-    #
-    # print("Importing network ids...")
-    # networks = list(get_all_relevant_networks())
-    # print("Importing " + str(len(networks)) + " networks.")
-    # time.sleep(3)
-    #
-    # network_index = 0
-    #
-    # while network_index + 10 <= len(networks):
-    #     this_10 = networks[network_index:network_index + 10]
-    #     nets = get_network_entries(this_10)
-    #
-    #     print("Adding networks " + str(network_index) + " - " + str(network_index + 10))
-    #     upload_nets(nets, kegg_networks_collection)
-    #     time.sleep(3)
-    #
-    #     network_index += 10
-    #
-    # last_nets_index = network_index
-    # last_nets = networks[last_nets_index:]
-    # print("Adding last networks...")
-    # upload_nets(last_nets, kegg_networks_collection)
+    db = client["networks"]
+    kegg_networks_collection = db["kegg_networks"]
+
+    if kegg_networks_collection.count() > 0:
+        print("Dropping networks collection...")
+        kegg_networks_collection.drop()
+
+    print("Importing network ids...")
+    networks = list(get_all_relevant_networks())
+    print("Importing " + str(len(networks)) + " networks.")
+    time.sleep(3)
+
+    network_index = 0
+
+    while network_index + 10 <= len(networks):
+        this_10 = networks[network_index:network_index + 10]
+        nets = get_network_entries(this_10)
+
+        print("Adding networks " + str(network_index) + " - " + str(network_index + 10))
+        upload_nets(nets, kegg_networks_collection)
+        time.sleep(3)
+
+        network_index += 10
+
+    last_nets_index = network_index
+    last_nets = networks[last_nets_index:]
+    print("Adding last networks...")
+    upload_nets(last_nets, kegg_networks_collection)
 
     db = client["drugs"]
     kegg_drugs_collection = db["kegg_drugs"]

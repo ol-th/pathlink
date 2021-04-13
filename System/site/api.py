@@ -2,7 +2,6 @@ from .utilities import kegg_helper, neo4j_helper, mongo_helper, config, pathwayc
     ensembl_helper
 from .utilities.classes import Gene
 from bson import json_util
-import configparser
 
 
 # TODO: function_enrichment_gene_list
@@ -77,7 +76,6 @@ def pathway_gene_interaction(pathway_name, pathway_kegg_id=None, input_gene=None
     else:
         gene = input_gene
 
-    kegg_pathway_id = None
     if pathway_kegg_id is None:
         kegg_pathway_id = kegg_helper.kegg_search("pathway", pathway_name)[0]
     else:
@@ -132,7 +130,6 @@ def neo4j_pathway(identifier, options=None):
     pathway = kegg_helper.kegg_get_pathway(accession)
 
     gene_names = neo4j_helper.make_genes_from_kegg_pathway(pathway.genes)
-    mongo_uri = config.get_config()["mutations_db"]["uri"]
 
     # This "known" dict is checked afterwards to find unknown nodes in the graph
     known = {}

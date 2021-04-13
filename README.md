@@ -1,4 +1,4 @@
-# pathways-project
+# PathwayLink
 
 This is the repository containing my 3rd year project research.
 
@@ -12,7 +12,9 @@ The purpose of this project is to provide an API and graphical interface which p
 
 * KEGG
 * Pathway Commons
-* COSMIC
+* CIViCDB
+* ClinVar
+* UniProt
 * STRING
 
 The system will also provide an API to produce comprehensive Neo4j representations of all KEGG pathways - along with mechanisms for enrichment and other analysis.
@@ -25,7 +27,12 @@ These are the files and programs I used for my preliminary research into the Bio
 
 ### System
 
-This is the cumulative result of the work so far with a frontend Flask webserver and hopefully
-a REST-style API.
+This is the cumulative result of the work so far with a frontend Flask webserver and a REST-style API.
 
 This frontend accepts structured queries fulfilling the criteria set out in the report.
+
+For more information about running the system, consult System/README.md
+
+### Testing
+
+This contains any script used to test the system as an outsider.
