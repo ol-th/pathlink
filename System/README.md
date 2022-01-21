@@ -39,7 +39,7 @@ paste them into the relevant locations.
    
 ## Usage
 
-- The system has a frontend available via the root directory (usually 127.0.0.1/).
+- The system has a frontend available via localhost (usually 127.0.0.1/).
 This is a comprehensive interface for simple queries.
   
 - The system also has a total of 7 API endpoints:
