@@ -24,7 +24,7 @@ paste them into the relevant locations.
    
 3. Populate cache database
 
-    The proejct uses the mongoDB as a form of cache. This can be filled by running:
+    The project uses the mongoDB as a form of cache. This can be filled by running:
 
     ```
    cd db_management
