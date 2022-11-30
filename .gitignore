@@ -2,19 +2,19 @@
 venv
 .Python
 .idea
-Preliminaries/server_config
-/Preliminaries/mutations_db/variant_summary.txt
-/Preliminaries/mutations_db/variation_allele.txt
-/Preliminaries/mutations_db/nightly-VariantSummaries.tsv
-/Preliminaries/mutations_db/nightly-ClinicalEvidenceSummaries.tsv
-/System/db_management/nightly-ClinicalEvidenceSummaries.tsv
-/System/db_management/nightly-VariantSummaries.tsv
-/System/db_management/variant_summary.txt
-/System/db_management/variation_allele.txt
-/System/db_management/civic_variant_summary.tsv
-/System/db_management/clinvar_evidence_summary.tsv
-/System/db_management/clinvar_variant_summary.txt
-/System/db_management/clinvar_variation_allele.txt
+preliminaries/server_config
+preliminaries/mutations_db/variant_summary.txt
+preliminaries/mutations_db/variation_allele.txt
+preliminaries/mutations_db/nightly-VariantSummaries.tsv
+preliminaries/mutations_db/nightly-ClinicalEvidenceSummaries.tsv
+scripts/db_management/nightly-ClinicalEvidenceSummaries.tsv
+scripts/db_management/nightly-VariantSummaries.tsv
+scripts/db_management/variant_summary.txt
+scripts/db_management/variation_allele.txt
+scripts/db_management/civic_variant_summary.tsv
+scripts/db_management/clinvar_evidence_summary.tsv
+scripts/db_management/clinvar_variant_summary.txt
+scripts/db_management/clinvar_variation_allele.txt
 
 
 # Byte-compiled / optimized / DLL files

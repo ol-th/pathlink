@@ -1,5 +1,4 @@
-from .utilities import kegg_helper, neo4j_helper, mongo_helper, config, pathwaycommons_helper, string_helper,\
-    ensembl_helper
+from .utilities import kegg_helper, neo4j_helper, mongo_helper, config, pathwaycommons_helper, string_helper, ensembl_helper
 from .utilities.classes import Gene
 from bson import json_util
 

@@ -4,6 +4,10 @@ import pymongo
 import time
 import re
 
+'''
+    Pull Gene, Drug, Cancer Pathway Data from KEGG and push to
+    MongoDB collections
+'''
 
 def new_gene_dict(input_id, input_name):
     output = {"name": input_name.replace("*", "").strip()}
@@ -40,7 +44,7 @@ def new_relation_dict(previous_genes, symbol):
 
     output = {
         "mutation_activated": any([prev["mutation"] for prev in previous_genes]),
-        "type": symbol_table[symbol]
+        "type": symbol_table.get(symbol, 'unknown')
     }
 
     return output
