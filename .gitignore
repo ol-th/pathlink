@@ -2,19 +2,19 @@
 venv
 .Python
 .idea
-preliminaries/server_config
-preliminaries/mutations_db/variant_summary.txt
-preliminaries/mutations_db/variation_allele.txt
-preliminaries/mutations_db/nightly-VariantSummaries.tsv
-preliminaries/mutations_db/nightly-ClinicalEvidenceSummaries.tsv
-scripts/db_management/nightly-ClinicalEvidenceSummaries.tsv
-scripts/db_management/nightly-VariantSummaries.tsv
-scripts/db_management/variant_summary.txt
-scripts/db_management/variation_allele.txt
-scripts/db_management/civic_variant_summary.tsv
-scripts/db_management/clinvar_evidence_summary.tsv
-scripts/db_management/clinvar_variant_summary.txt
-scripts/db_management/clinvar_variation_allele.txt
+
+# Configuration files
+server_config
+
+# Data pulled during mongo population
+variant_summary.txt
+variation_allele.txt
+nightly-VariantSummaries.tsv
+nightly-ClinicalEvidenceSummaries.tsv
+civic_variant_summary.tsv
+clinvar_evidence_summary.tsv
+clinvar_variant_summary.txt
+clinvar_variation_allele.txt
 
 
 # Byte-compiled / optimized / DLL files
