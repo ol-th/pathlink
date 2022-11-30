@@ -6,7 +6,8 @@ def pc_participation_check(uniprot_id, pathway_name):
 
     sparql = SPARQLWrapper("http://rdf.pathwaycommons.org/sparql/")
 
-    statement = """
+    statement = (
+        """
     
         PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -17,18 +18,23 @@ def pc_participation_check(uniprot_id, pathway_name):
         ?protein rdf:type bp:Protein;
                        bp:entityReference ?eref.
 
-        FILTER regex(?eref, "^http://identifiers.org/uniprot/""" + uniprot_id + """$")
+        FILTER regex(?eref, "^http://identifiers.org/uniprot/"""
+        + uniprot_id
+        + """$")
 
         ?pathway rdf:type bp:Pathway.
         ?interaction bp:participant ?protein.
         ?pathway bp:pathwayComponent ?interaction;
                  bp:displayName ?pathwayName.
 
-        FILTER regex(?pathwayName, \".*""" + pathway_name + """.*\", "i")
+        FILTER regex(?pathwayName, \".*"""
+        + pathway_name
+        + """.*\", "i")
         }
         LIMIT 10
 
         """
+    )
 
     sparql.setQuery(statement)
     sparql.setReturnFormat(XML)
@@ -42,7 +48,8 @@ def pathways_given_product(uniprot_id):
 
     sparql = SPARQLWrapper("http://rdf.pathwaycommons.org/sparql/")
 
-    statement = """
+    statement = (
+        """
 
             PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -53,7 +60,9 @@ def pathways_given_product(uniprot_id):
             ?protein rdf:type bp:Protein;
                            bp:entityReference ?eref.
 
-            FILTER regex(?eref, "^http://identifiers.org/uniprot/""" + uniprot_id + """$")
+            FILTER regex(?eref, "^http://identifiers.org/uniprot/"""
+        + uniprot_id
+        + """$")
 
             ?pathway rdf:type bp:Pathway.
             ?interaction bp:participant|bp:left|bp:right ?protein.
@@ -65,6 +74,7 @@ def pathways_given_product(uniprot_id):
             LIMIT 50
 
             """
+    )
 
     sparql.setQuery(statement)
     sparql.setReturnFormat(XML)
@@ -90,14 +100,17 @@ def pathways_given_product(uniprot_id):
 def pathway_parents(name):
     sparql = SPARQLWrapper("http://rdf.pathwaycommons.org/sparql/")
 
-    query = """
+    query = (
+        """
         SELECT DISTINCT ?parentpname ?comment
         WHERE
         {
 
             ?pathway rdf:type bp:Pathway;
                      bp:displayName ?pname.
-            FILTER regex(?pname, ".*""" + name + """.*", "i")
+            FILTER regex(?pname, ".*"""
+        + name
+        + """.*", "i")
 
             {
                 
@@ -113,6 +126,7 @@ def pathway_parents(name):
             }
         }
         LIMIT 200"""
+    )
 
     sparql.setQuery(query)
     sparql.setReturnFormat(XML)
@@ -137,7 +151,8 @@ def pathway_parents(name):
 
 def get_gene_name(id, limit=1):
     sparql = SPARQLWrapper("http://rdf.pathwaycommons.org/sparql/")
-    query = """
+    query = (
+        """
         PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
@@ -148,10 +163,14 @@ def get_gene_name(id, limit=1):
                        bp:entityReference ?eref;
                        bp:displayName ?proteinName.
 
-        FILTER regex(?eref, "^http://identifiers.org/uniprot/""" + id + """$")
+        FILTER regex(?eref, "^http://identifiers.org/uniprot/"""
+        + id
+        + """$")
 
         }
-        LIMIT """ + str(limit)
+        LIMIT """
+        + str(limit)
+    )
     sparql.setQuery(query)
     sparql.setReturnFormat(XML)
     ret = sparql.query().convert().toxml()

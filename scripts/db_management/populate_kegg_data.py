@@ -4,10 +4,11 @@ import pymongo
 import time
 import re
 
-'''
+"""
     Pull Gene, Drug, Cancer Pathway Data from KEGG and push to
     MongoDB collections
-'''
+"""
+
 
 def new_gene_dict(input_id, input_name):
     output = {"name": input_name.replace("*", "").strip()}
@@ -39,12 +40,12 @@ def new_relation_dict(previous_genes, symbol):
         "=|": "repression",
         "//": "missing interaction",
         ">>": "enzyme-enzyme",
-        "--": "complex formation"
+        "--": "complex formation",
     }
 
     output = {
         "mutation_activated": any([prev["mutation"] for prev in previous_genes]),
-        "type": symbol_table.get(symbol, 'unknown')
+        "type": symbol_table.get(symbol, "unknown"),
     }
 
     return output
@@ -117,29 +118,57 @@ def upload_nets(nets, collection):
         source_ids = []
         # Go through first source products, assign ids and add to query
         for product in products_source:
-            net_query += "(a" + str(current_id) + ":" + product["type"] + \
-                         "{name:\"" + product["name"] + "\", kegg_ids: [\"" + product["id"] + "\"]}),"
+            net_query += (
+                "(a"
+                + str(current_id)
+                + ":"
+                + product["type"]
+                + '{name:"'
+                + product["name"]
+                + '", kegg_ids: ["'
+                + product["id"]
+                + '"]}),'
+            )
             source_ids.append(current_id)
             current_id += 1
 
         while index + 2 < len(expanded_tokens):
             # Get current relation
-            relation_dict = new_relation_dict(products_source, expanded_tokens[index + 1])
+            relation_dict = new_relation_dict(
+                products_source, expanded_tokens[index + 1]
+            )
             # Get destination products
-            products_destination = create_products(expanded_tokens[index + 2], definition_tokens[index + 2])
+            products_destination = create_products(
+                expanded_tokens[index + 2], definition_tokens[index + 2]
+            )
             # Assign ids to destination products and add to query
             dest_ids = []
             for product in products_destination:
-                net_query += "(a" + str(current_id) + ":" + product["type"] + \
-                             "{name:\"" + product["name"] + "\", kegg_ids: [\"" + product["id"] + "\"]}),"
+                net_query += (
+                    "(a"
+                    + str(current_id)
+                    + ":"
+                    + product["type"]
+                    + '{name:"'
+                    + product["name"]
+                    + '", kegg_ids: ["'
+                    + product["id"]
+                    + '"]}),'
+                )
                 dest_ids.append(current_id)
                 current_id += 1
 
             for source in source_ids:
                 for dest in dest_ids:
-                    net_query += "(a" + str(source) + ")-[:Network {subtypes:[\"" + relation_dict["type"] + "\""
+                    net_query += (
+                        "(a"
+                        + str(source)
+                        + ')-[:Network {subtypes:["'
+                        + relation_dict["type"]
+                        + '"'
+                    )
                     if relation_dict["mutation_activated"]:
-                        net_query += ",\"mutation activated\""
+                        net_query += ',"mutation activated"'
                     net_query += "]}]->" + "(a" + str(dest) + "),"
             source_ids = dest_ids
             index += 2
@@ -163,10 +192,7 @@ def get_drugs_list():
         names_list = []
         for name in drug_names.split(";"):
             names_list.append(re.sub(r"\([^()]*\)", "", name).strip())
-        output.append({
-            "kegg_id": drug_id,
-            "names": names_list
-        })
+        output.append({"kegg_id": drug_id, "names": names_list})
 
     return output
 
@@ -192,7 +218,9 @@ def get_all_relevant_drug_links():
         pathways_to_drugs[pathway].append(drug)
 
     for key in pathways_to_drugs.keys():
-        output.append({"target": key.replace("map", "hsa"), "drugs": pathways_to_drugs[key]})
+        output.append(
+            {"target": key.replace("map", "hsa"), "drugs": pathways_to_drugs[key]}
+        )
 
     time.sleep(3)
     # Genes
@@ -236,7 +264,7 @@ def main():
     network_index = 0
 
     while network_index + 10 <= len(networks):
-        this_10 = networks[network_index:network_index + 10]
+        this_10 = networks[network_index : network_index + 10]
         nets = get_network_entries(this_10)
 
         print("Adding networks " + str(network_index) + " - " + str(network_index + 10))
@@ -270,5 +298,5 @@ def main():
     kegg_drug_links_collection.insert_many(drugs)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

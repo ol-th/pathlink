@@ -9,16 +9,11 @@ def kegg_to_uniprot_identifiers(kegg_list):
     for kegg_id in kegg_list:
         query += kegg_id + " "
     query = query[:-1]
-    params = {
-        "from": "KEGG_ID",
-        "to": "ID",
-        "format": "tab",
-        "query": query
-     }
-    r = requests.get('https://www.uniprot.org/uploadlists/', params=params)
+    params = {"from": "KEGG_ID", "to": "ID", "format": "tab", "query": query}
+    r = requests.get("https://www.uniprot.org/uploadlists/", params=params)
     prev = ""
     output = []
-    for line in r.text.split('\n')[:-1]:
+    for line in r.text.split("\n")[:-1]:
         tabs = line.split("\t")
         if tabs[0] != prev and tabs[0] in kegg_list:
             output.append(tabs[1])
@@ -32,16 +27,11 @@ def uniprot_ids_to_names(kegg_list):
     for kegg_id in kegg_list:
         query += kegg_id + " "
     query = query[:-1]
-    params = {
-        "from": "KEGG_ID",
-        "to": "ID",
-        "format": "tab",
-        "query": query
-     }
-    r = requests.get('https://www.uniprot.org/uploadlists/', params=params)
+    params = {"from": "KEGG_ID", "to": "ID", "format": "tab", "query": query}
+    r = requests.get("https://www.uniprot.org/uploadlists/", params=params)
     prev = ""
     output = []
-    for i in r.text.split('\n')[:-1]:
+    for i in r.text.split("\n")[:-1]:
         tabs = i.split("\t")
         if tabs[0] != prev:
             output.append(tabs[1])
@@ -51,7 +41,11 @@ def uniprot_ids_to_names(kegg_list):
 
 
 def get_uniprot_identifier(name):
-    url = "https://www.uniprot.org/uniprot/?query=" + name + "&fil=organism%3A%22Homo+sapiens+%28Human%29+%5B9606%5D%22&sort=score&limit=1&format=XML"
+    url = (
+        "https://www.uniprot.org/uniprot/?query="
+        + name
+        + "&fil=organism%3A%22Homo+sapiens+%28Human%29+%5B9606%5D%22&sort=score&limit=1&format=XML"
+    )
     r = requests.get(url)
     if r.status_code != 200:
         return None
@@ -99,7 +93,10 @@ def get_uniprot_functions(xml):
         return None
     descriptions = []
     for entry in xml[0]:
-        if entry.tag == "{http://uniprot.org/uniprot}comment" and entry.attrib['type'] == "function":
+        if (
+            entry.tag == "{http://uniprot.org/uniprot}comment"
+            and entry.attrib["type"] == "function"
+        ):
             for i in entry:
                 if i.tag == "{http://uniprot.org/uniprot}text":
                     descriptions.append(i.text)

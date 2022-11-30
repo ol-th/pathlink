@@ -16,11 +16,13 @@ def search(query):
         if query_list[0].startswith("gene"):
             return product_query(query_list)
     elif len(query_list) == 2:
-        if (query_list[0].startswith("path") or query_list[0].startswith("pathway")) and query_list[1].startswith(
-                "gene"):
+        if (
+            query_list[0].startswith("path") or query_list[0].startswith("pathway")
+        ) and query_list[1].startswith("gene"):
             return pathway_product_query(query_list[0], query_list[1])
         if query_list[0].startswith("gene") and (
-                query_list[1].startswith("path") or query_list[1].startswith("pathway")):
+            query_list[1].startswith("path") or query_list[1].startswith("pathway")
+        ):
             return pathway_product_query(query_list[1], query_list[0])
         if query_list[0].startswith("gene") and query_list[1].startswith("gene"):
             return product_product_query(query_list[0], query_list[1])
@@ -54,7 +56,9 @@ def pathway_query(query_list):
             print(name)
             return get_pathway_results(query[0] + query[1], name)
 
-    return ["No results found - have you checked for typos? The query may be malformed."]
+    return [
+        "No results found - have you checked for typos? The query may be malformed."
+    ]
 
 
 def get_pathway_results(identifier, name):
@@ -62,12 +66,16 @@ def get_pathway_results(identifier, name):
     pathway_info = api.get_pathway(identifier)
 
     # Adding the pathway link
-    output_list = ["<a href=\"" + pathway_info["pathway_link"] + "\"><h2>KEGG entry for pathway</h2></a>",
-                   "<p>Description: " + pathway_info["pathway_description"] + "<p>"]
+    output_list = [
+        '<a href="'
+        + pathway_info["pathway_link"]
+        + '"><h2>KEGG entry for pathway</h2></a>',
+        "<p>Description: " + pathway_info["pathway_description"] + "<p>",
+    ]
     # Adding a list of genes involved
     gene_list_text = "<p><h2>Gene participants:</h2></p>"
     for gene in pathway_info["gene_list"]:
-        gene_list_text += "<p><a href=\"" + gene[0] + "\">" + gene[1] + "</a></p>"
+        gene_list_text += '<p><a href="' + gene[0] + '">' + gene[1] + "</a></p>"
     output_list.append(gene_list_text)
     # Finding known parents of the pathway (using pathway commons)
     parents_text = "<h2>Known parent pathways:</h2>"
@@ -92,13 +100,20 @@ def product_query(query_list):
     result = get_product_results(gene)
     if result is not None:
         return result
-    return ["No results found - have you checked for typos? The query may be malformed."]
+    return [
+        "No results found - have you checked for typos? The query may be malformed."
+    ]
 
 
 def get_product_results(gene):
     output_list = [
-        "<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene.kegg_id + "\"><h2>KEGG entry for gene</h2></a>",
-        "<p><a href=\"http://www.uniprot.org/uniprot/" + gene.uniprot_id + "\"><h2>UniProt entry for gene</h2></a></p>"]
+        '<a href="http://www.genome.jp/dbget-bin/www_bget?'
+        + gene.kegg_id
+        + '"><h2>KEGG entry for gene</h2></a>',
+        '<p><a href="http://www.uniprot.org/uniprot/'
+        + gene.uniprot_id
+        + '"><h2>UniProt entry for gene</h2></a></p>',
+    ]
     if gene.functions is not None and len(gene.functions) > 0:
         output_list.append("<p><h2>Gene function(s):</h2><p>")
         for index, function in enumerate(gene.functions):
@@ -109,16 +124,26 @@ def get_product_results(gene):
     if len(gene_data["kegg_pathways"]) > 0:
         output_list.append("<h2>[KEGG] Participant in:</h2>")
         for i in gene_data["kegg_pathways"]:
-            line = """
-            <p><a href=\"http://www.genome.jp/dbget-bin/www_bget?""" + i[0] + """\">""" + i[1] + """</a></p>
+            line = (
+                """
+            <p><a href=\"http://www.genome.jp/dbget-bin/www_bget?"""
+                + i[0]
+                + """\">"""
+                + i[1]
+                + """</a></p>
             """
+            )
             output_list.append(line)
     if len(gene_data["pc_pathways"]) > 0:
         output_list.append("<h2>[Pathway Commons] Participant in:</h2>")
         for i in gene_data["pc_pathways"]:
-            line = """
-                    <p>""" + i[0] + """</a></p>
+            line = (
+                """
+                    <p>"""
+                + i[0]
+                + """</a></p>
                     """
+            )
             output_list.append(line)
     variants = [json_util.loads(result) for result in gene_data["variants"]]
     if len(variants) > 0:
@@ -159,27 +184,42 @@ def pathway_product_query(pathway_input, product_input):
         gene_identifier = product_list[1]
         gene = Gene(uniprot_id=gene_identifier)
 
-    if all(v is not None for v in [gene.name, gene.uniprot_id, pathway_name, pathway_identifier]):
+    if all(
+        v is not None
+        for v in [gene.name, gene.uniprot_id, pathway_name, pathway_identifier]
+    ):
         return get_pathway_product_results(gene, pathway_name, pathway_identifier)
 
-    return ["No results found - have you checked for typos? The query may be malformed."]
+    return [
+        "No results found - have you checked for typos? The query may be malformed."
+    ]
 
 
 def get_pathway_product_results(gene, pathway_name, pathway_identifier):
     # Links
-    output_list = ["<p><h2>" + gene.name + ":</h2></p>"
-                   "<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene.kegg_id +
-                   "\">KEGG</a>",
-                   "<p><a href=\"http://www.uniprot.org/uniprot/" + gene.uniprot_id + "\">UniProt</a></p>",
-                   "<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + pathway_identifier +
-                   "\"><h2>KEGG entry for " + pathway_name + "</h2></a>",
-                   "<p><h2>Participation verdict:</h2><p>"]
+    output_list = [
+        "<p><h2>" + gene.name + ":</h2></p>"
+        '<a href="http://www.genome.jp/dbget-bin/www_bget?'
+        + gene.kegg_id
+        + '">KEGG</a>',
+        '<p><a href="http://www.uniprot.org/uniprot/'
+        + gene.uniprot_id
+        + '">UniProt</a></p>',
+        '<a href="http://www.genome.jp/dbget-bin/www_bget?'
+        + pathway_identifier
+        + '"><h2>KEGG entry for '
+        + pathway_name
+        + "</h2></a>",
+        "<p><h2>Participation verdict:</h2><p>",
+    ]
 
     # Getting info from the API:
     #  participation_verdict
     #  participant_kegg_ids
     #  TBC...
-    interaction_info = api.pathway_gene_interaction(pathway_name, pathway_kegg_id=pathway_identifier, input_gene=gene)
+    interaction_info = api.pathway_gene_interaction(
+        pathway_name, pathway_kegg_id=pathway_identifier, input_gene=gene
+    )
     participation_verdict = interaction_info["participation_verdict"]
 
     # Does the gene participate in the pathway?
@@ -208,7 +248,9 @@ def get_pathway_product_results(gene, pathway_name, pathway_identifier):
                 if len(via) > 5:
                     via = via[:5]
                 via = ", ".join(via)
-                output_list.append("<p>" + source + " -> " + dest + " via " + via + "</p>")
+                output_list.append(
+                    "<p>" + source + " -> " + dest + " via " + via + "</p>"
+                )
 
     return output_list
 
@@ -231,10 +273,15 @@ def product_product_query(query1, query2):
         identifier = list2[1]
         gene2 = Gene(uniprot_id=identifier)
 
-    if all(v is not None for v in [gene1.name, gene1.uniprot_id, gene2.name, gene2.uniprot_id]):
+    if all(
+        v is not None
+        for v in [gene1.name, gene1.uniprot_id, gene2.name, gene2.uniprot_id]
+    ):
         return get_product_product_results(gene1, gene2)
 
-    return ["No results found - have you checked for typos? The query may be malformed."]
+    return [
+        "No results found - have you checked for typos? The query may be malformed."
+    ]
 
 
 def get_product_product_results(gene1, gene2):
@@ -252,19 +299,33 @@ def get_product_product_results(gene1, gene2):
 
     output_list = [
         "<p><h2> Entries for " + gene1.name + ": </h2></p>",
-        "<p><a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene1.kegg_id + "\">KEGG</a></p>",
-        "<p><a href=\"http://www.uniprot.org/uniprot/" + gene1.uniprot_id + "\">UniProt</a></p>",
+        '<p><a href="http://www.genome.jp/dbget-bin/www_bget?'
+        + gene1.kegg_id
+        + '">KEGG</a></p>',
+        '<p><a href="http://www.uniprot.org/uniprot/'
+        + gene1.uniprot_id
+        + '">UniProt</a></p>',
         "<p><h2> Entries for " + gene2.name + ": </h2></p>",
-        "<p><a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene2.kegg_id + "\">KEGG</a></p>",
-        "<p><a href=\"http://www.uniprot.org/uniprot/" + gene2.uniprot_id + "\">UniProt</a></p>",
-        "<h2>Mutual pathways:</h2>"
+        '<p><a href="http://www.genome.jp/dbget-bin/www_bget?'
+        + gene2.kegg_id
+        + '">KEGG</a></p>',
+        '<p><a href="http://www.uniprot.org/uniprot/'
+        + gene2.uniprot_id
+        + '">UniProt</a></p>',
+        "<h2>Mutual pathways:</h2>",
     ]
 
     if len(mutual_pathways) == 0:
         output_list.append("<p>None</p>")
     else:
         for pathway in mutual_pathways:
-            line = "<p><a href=\"http://www.genome.jp/dbget-bin/www_bget?" + pathway[0] + "\">" + pathway[1] + "</a><p>"
+            line = (
+                '<p><a href="http://www.genome.jp/dbget-bin/www_bget?'
+                + pathway[0]
+                + '">'
+                + pathway[1]
+                + "</a><p>"
+            )
             output_list.append(line)
 
     # Functional Enrichment
@@ -285,7 +346,9 @@ def get_product_product_results(gene1, gene2):
                 if len(via) > 5:
                     via = via[:5]
                 via = ", ".join(via)
-                output_list.append("<p>" + source + " -> " + dest + " via " + via + "</p>")
+                output_list.append(
+                    "<p>" + source + " -> " + dest + " via " + via + "</p>"
+                )
 
     return output_list
 
@@ -314,18 +377,29 @@ def get_product_variant_query(gene, variant):
         return ["Variant/mutation not found - malformed query?"]
 
     first_variant = json_util.loads(gene_info_dict["results"])
-    output = ["<p><h2>" + gene.name + ":</h2></p>"
-              "<a href=\"http://www.genome.jp/dbget-bin/www_bget?" + gene.kegg_id +
-              "\">KEGG</a>",
-              "<p><a href=\"http://www.uniprot.org/uniprot/" + gene.uniprot_id + "\">UniProt</a></p>",
-              "<p><h2>" + gene.name + " " + variant + ":</h2></p>",
-              "<p> Clinical Significance (ClinVar): " + first_variant["ClinicalSignificance"],
-              "<p> Variant types: " + first_variant["variant_types"],
-              "<p><a href=\"" + first_variant["variant_civic_url"] + "\"> CiViC database Entry</a><p>",
-              "<p><h2>Evidence findings:</h2></p>",
-              "<p>Potential drugs:</p>",
-              ]
+    output = [
+        "<p><h2>" + gene.name + ":</h2></p>"
+        '<a href="http://www.genome.jp/dbget-bin/www_bget?'
+        + gene.kegg_id
+        + '">KEGG</a>',
+        '<p><a href="http://www.uniprot.org/uniprot/'
+        + gene.uniprot_id
+        + '">UniProt</a></p>',
+        "<p><h2>" + gene.name + " " + variant + ":</h2></p>",
+        "<p> Clinical Significance (ClinVar): " + first_variant["ClinicalSignificance"],
+        "<p> Variant types: " + first_variant["variant_types"],
+        '<p><a href="'
+        + first_variant["variant_civic_url"]
+        + '"> CiViC database Entry</a><p>',
+        "<p><h2>Evidence findings:</h2></p>",
+        "<p>Potential drugs:</p>",
+    ]
     for evidence in evidence_info_dicts:
-        output.append("<p>" + str(evidence["drugs"]) + " - <a href=\"" + str(evidence["evidence_civic_url"]) +
-                      "\">Evidence</a></p>")
+        output.append(
+            "<p>"
+            + str(evidence["drugs"])
+            + ' - <a href="'
+            + str(evidence["evidence_civic_url"])
+            + '">Evidence</a></p>'
+        )
     return output

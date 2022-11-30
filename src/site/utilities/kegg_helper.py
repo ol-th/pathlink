@@ -5,14 +5,14 @@ import Bio.KEGG.KGML.KGML_parser as KEGG_KGML_PARSER
 
 def kegg_search(database, query):
     result = KEGG_REST.kegg_find(database, query.replace(" ", "+"))
-    result_lines = result.read().split('\n')
+    result_lines = result.read().split("\n")
     result_lines = result_lines[:-1]
     if result_lines[0] == "":
         return []
 
     output = []
     for result in result_lines:
-        output.append(result.split('\t')[0])
+        output.append(result.split("\t")[0])
     return output
 
 
@@ -125,4 +125,3 @@ def get_gene_pathways(protein_info_kegg):
             kegg_pathways_list.append(protein_info_kegg[index][12:].split("  "))
         index += 1
     return kegg_pathways_list
-

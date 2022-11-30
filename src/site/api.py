@@ -1,4 +1,12 @@
-from .utilities import kegg_helper, neo4j_helper, mongo_helper, config, pathwaycommons_helper, string_helper, ensembl_helper
+from .utilities import (
+    kegg_helper,
+    neo4j_helper,
+    mongo_helper,
+    config,
+    pathwaycommons_helper,
+    string_helper,
+    ensembl_helper,
+)
 from .utilities.classes import Gene
 from bson import json_util
 
@@ -48,7 +56,7 @@ def get_gene(name=None, uniprot_id=None, options=None):
         "functions": gene.functions,
         "kegg_id": gene.kegg_id,
         "uniprot_id": gene.uniprot_id,
-        "kegg_pathways": kegg_pathways
+        "kegg_pathways": kegg_pathways,
     }
 
     if "pc_pathways" in options:
@@ -68,8 +76,14 @@ def get_gene(name=None, uniprot_id=None, options=None):
 
 
 # Returns interaction data between pathway and gene
-def pathway_gene_interaction(pathway_name, pathway_kegg_id=None, input_gene=None, gene_uniprot=None, gene_kegg=None,
-                             gene_name=None):
+def pathway_gene_interaction(
+    pathway_name,
+    pathway_kegg_id=None,
+    input_gene=None,
+    gene_uniprot=None,
+    gene_kegg=None,
+    gene_name=None,
+):
     if input_gene is None:
         gene = Gene(uniprot_id=gene_uniprot, kegg_id=gene_kegg, name=gene_name)
     else:
@@ -80,7 +94,9 @@ def pathway_gene_interaction(pathway_name, pathway_kegg_id=None, input_gene=None
     else:
         kegg_pathway_id = pathway_kegg_id
 
-    participation_verdict = kegg_helper.kegg_pathway_participation(gene.kegg_id, kegg_pathway_id)
+    participation_verdict = kegg_helper.kegg_pathway_participation(
+        gene.kegg_id, kegg_pathway_id
+    )
     pathway = kegg_helper.kegg_get_pathway(kegg_pathway_id)
     participant_ids = [gene.name.split(" ")[0] for gene in pathway.genes]
     participant_ids.append(gene.name)
@@ -89,31 +105,32 @@ def pathway_gene_interaction(pathway_name, pathway_kegg_id=None, input_gene=None
     return {
         "participation_verdict": participation_verdict,
         "direct": direct,
-        "indirect": indirect
+        "indirect": indirect,
     }
 
 
 # Returns mutation data from mongo db given gene, variant name
 def gene_variant_data(gene, variant):
     db_config = config.get_config()
-    results = mongo_helper.get_mutation_data(gene, variant, db_config["mutations_db"]["uri"])
+    results = mongo_helper.get_mutation_data(
+        gene, variant, db_config["mutations_db"]["uri"]
+    )
 
     if results is None:
         return {}
 
     effects = ensembl_helper.get_effect_predictions("rs" + str(results["RS# (dbSNP)"]))
     results = json_util.dumps(results)
-    return {
-        "results": results,
-        "ensembl_vep": effects
-    }
+    return {"results": results, "ensembl_vep": effects}
 
 
 # Returns any evidence stored in evidence db
 def variant_evidence(gene, variant):
     db_config = config.get_config()
 
-    return mongo_helper.variant_evidence(gene, variant, db_config["mutations_db"]["uri"])
+    return mongo_helper.variant_evidence(
+        gene, variant, db_config["mutations_db"]["uri"]
+    )
 
 
 def functional_enrichment(gene_list):
@@ -133,13 +150,17 @@ def neo4j_pathway(identifier, options=None):
     # This "known" dict is checked afterwards to find unknown nodes in the graph
     known = {}
     create_query = "CREATE "
-    query_list = [neo4j_helper.make_gene_query(pathway, gene_names, known),
-                  neo4j_helper.make_compound_query(pathway.compounds, known),
-                  neo4j_helper.make_reaction_query(pathway.reaction_entries, known),
-                  neo4j_helper.make_map_query(pathway.name)]
+    query_list = [
+        neo4j_helper.make_gene_query(pathway, gene_names, known),
+        neo4j_helper.make_compound_query(pathway.compounds, known),
+        neo4j_helper.make_reaction_query(pathway.reaction_entries, known),
+        neo4j_helper.make_map_query(pathway.name),
+    ]
 
     if "variants" in options:
-        query_list.append(neo4j_helper.make_variants_query(zip(gene_names, pathway.genes)))
+        query_list.append(
+            neo4j_helper.make_variants_query(zip(gene_names, pathway.genes))
+        )
 
     relations_data = neo4j_helper.make_relations_query(pathway.relations, known)
     query_list.append(neo4j_helper.make_unknown_query(relations_data[1]))
@@ -158,11 +179,15 @@ def neo4j_pathway(identifier, options=None):
     if "drugs" in options:
         pipeline.append(neo4j_helper.make_drugs_query(pathway))
 
-    pipeline.append("MATCH (n1),(n2) WHERE ANY (x IN n1.kegg_ids WHERE x IN n2.kegg_ids) and id(n1) <> id(n2) "
-                    "WITH [n1,n2] as ns CALL apoc.refactor.mergeNodes(ns, {properties:\"combine\", mergeRels:true}) "
-                    "YIELD node RETURN node")
-    pipeline.append("MATCH (n1:Variant),(n2:Variant) WHERE n1.variant = n2.variant and id(n1) <> id(n2) "
-                    "WITH [n1,n2] as ns CALL apoc.refactor.mergeNodes(ns, {properties:\"combine\", mergeRels:true}) "
-                    "YIELD node RETURN node")
+    pipeline.append(
+        "MATCH (n1),(n2) WHERE ANY (x IN n1.kegg_ids WHERE x IN n2.kegg_ids) and id(n1) <> id(n2) "
+        'WITH [n1,n2] as ns CALL apoc.refactor.mergeNodes(ns, {properties:"combine", mergeRels:true}) '
+        "YIELD node RETURN node"
+    )
+    pipeline.append(
+        "MATCH (n1:Variant),(n2:Variant) WHERE n1.variant = n2.variant and id(n1) <> id(n2) "
+        'WITH [n1,n2] as ns CALL apoc.refactor.mergeNodes(ns, {properties:"combine", mergeRels:true}) '
+        "YIELD node RETURN node"
+    )
 
     return {"neo4j_query_pipeline": pipeline}

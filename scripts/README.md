@@ -2,9 +2,8 @@
 
 A few scripts to test the service and get it running.
 
-## db_management
+## db_management
 This directory contains scripts to populate the Mongo database with data from some sources.
-Install 
 
 ## Other scripts
 The main purpose is to test the Cypher query mechanisms and input the cypher into a Neo4j database.

@@ -20,11 +20,13 @@ def make_gene_query(pathway, gene_names, known):
     query = ""
     for gene, gene_name in zip(gene_list, gene_names):
         known[gene.id] = True
-        query += "(a" + str(gene.id) + ":Gene {"\
-                 "name: \"" + gene_name[1] + "\","\
-                 "kegg_ids: [\"" + gene.name.strip().replace(" ", "\",\"") + "\"]," \
-                 "kegg_link: \"" + gene_name[0] + "\"," \
-                 "pathways: [\"" + pathway.name + "\"]}),"
+        query += (
+            "(a" + str(gene.id) + ":Gene {"
+            'name: "' + gene_name[1] + '",'
+            'kegg_ids: ["' + gene.name.strip().replace(" ", '","') + '"],'
+            'kegg_link: "' + gene_name[0] + '",'
+            'pathways: ["' + pathway.name + '"]}),'
+        )
 
     # Removing trailing comma
     query = query[:-1]
@@ -42,14 +44,18 @@ def make_variants_query(gene_info):
         mutations = mongo_helper.get_mutations(gene_name[1], uri)
         for mutation in mutations:
             # Add mutation query
-            query += "(v" + str(mutation_id) + ":Variant {" \
-                        "gene: \"" + str(mutation["gene"]) + "\", " \
-                        "variant: \"" + str(mutation["variant"]) + "\", " \
-                        "rsid: \"" + str(mutation["RS# (dbSNP)"]) + "\", " \
-                        "type: \"" + str(mutation["Type"]) + "\", " \
-                        "clinicalsignificance: \"" + str(mutation["ClinicalSignificance"]) + "\"" \
-                        "}),"
-            query += "(a" + str(gene.id) + ")-[:hasVariant]->(v" + str(mutation_id) + "),"
+            query += (
+                "(v" + str(mutation_id) + ":Variant {"
+                'gene: "' + str(mutation["gene"]) + '", '
+                'variant: "' + str(mutation["variant"]) + '", '
+                'rsid: "' + str(mutation["RS# (dbSNP)"]) + '", '
+                'type: "' + str(mutation["Type"]) + '", '
+                'clinicalsignificance: "' + str(mutation["ClinicalSignificance"]) + '"'
+                "}),"
+            )
+            query += (
+                "(a" + str(gene.id) + ")-[:hasVariant]->(v" + str(mutation_id) + "),"
+            )
             mutation_id += 1
 
     query = query[:-1]
@@ -60,8 +66,10 @@ def make_compound_query(compound_list, known):
     query = ""
     for compound in compound_list:
         known[compound.id] = True
-        query += "(a" + str(compound.id) + ":Compound {" \
-                 "kegg_ids: [\"" + compound.name.strip().replace(" ", "\",\"") + "\"]}),"
+        query += (
+            "(a" + str(compound.id) + ":Compound {"
+            'kegg_ids: ["' + compound.name.strip().replace(" ", '","') + '"]}),'
+        )
     # Removing trailing comma
     query = query[:-1]
     return query
@@ -71,8 +79,10 @@ def make_reaction_query(reaction_list, known):
     query = ""
     for reaction in reaction_list:
         known[reaction.id] = True
-        query += "(a" + str(reaction.id) + ":Reaction {" \
-                 "kegg_ids: [\"" + reaction.name.strip().replace(" ", "\",\"") + "\"]}),"
+        query += (
+            "(a" + str(reaction.id) + ":Reaction {"
+            'kegg_ids: ["' + reaction.name.strip().replace(" ", '","') + '"]}),'
+        )
     # Removing trailing comma
     query = query[:-1]
     return query
@@ -93,7 +103,7 @@ def make_reaction_query(reaction_list, known):
 
 
 def make_map_query(map_id):
-    query = "(m1:Map {kegg_ids: [\"" + map_id + "\"]})"
+    query = '(m1:Map {kegg_ids: ["' + map_id + '"]})'
     return query
 
 
@@ -101,13 +111,15 @@ def make_relations_query(relation_list, known):
     query = ""
     unknown_set = set()
     for relation in relation_list:
-        current_query = "(a" + str(relation.entry1.id) + ")-[:" + relation.type + " {subtypes: ["
+        current_query = (
+            "(a" + str(relation.entry1.id) + ")-[:" + relation.type + " {subtypes: ["
+        )
         if relation.entry1.id not in known.keys():
             unknown_set.add(relation.entry1.id)
         if relation.entry2.id not in known.keys():
             unknown_set.add(relation.entry2.id)
         for subtype in relation.subtypes:
-            current_query += "\"" + subtype[0] + "\","
+            current_query += '"' + subtype[0] + '",'
         # Fixes a bug where there's no subtypes and it prints subtypes: ]
         if len(relation.subtypes) > 0:
             current_query = current_query[:-1]
@@ -129,7 +141,9 @@ def make_unknown_query(unknown_list):
 
 def make_networks_query(pathway_id):
     uri = config.get_config()["mutations_db"]["uri"]
-    linked_networks = [entry[1] for entry in kegg_helper.kegg_link("network", pathway_id)]
+    linked_networks = [
+        entry[1] for entry in kegg_helper.kegg_link("network", pathway_id)
+    ]
 
     output = []
     for network_id in linked_networks:
@@ -166,18 +180,42 @@ def make_drugs_query(pathway):
     for drug in drug_connections.keys():
         targets = drug_connections[drug]
 
-        query += "(b" + str(current_drug_id) + ":Drug {kegg_ids: [\"" + drug + "\"]}),"
+        query += "(b" + str(current_drug_id) + ':Drug {kegg_ids: ["' + drug + '"]}),'
 
         for target in targets:
             # It's a pathway
             if target[0]:
-                query += "(a" + str(current_target_id) + ":Map { kegg_ids: [\"" + target[1] + "\"]}),"
-                query += "(a" + str(current_target_id) + ")-[:Targeted]->(b" + str(current_drug_id) + "),"
+                query += (
+                    "(a"
+                    + str(current_target_id)
+                    + ':Map { kegg_ids: ["'
+                    + target[1]
+                    + '"]}),'
+                )
+                query += (
+                    "(a"
+                    + str(current_target_id)
+                    + ")-[:Targeted]->(b"
+                    + str(current_drug_id)
+                    + "),"
+                )
                 current_target_id += 1
             # It's a gene
             else:
-                query += "(a" + str(current_target_id) + ":Gene { kegg_ids: [\"" + target[1] + "\"]}),"
-                query += "(a" + str(current_target_id) + ")-[:Targeted]->(b" + str(current_drug_id) + "),"
+                query += (
+                    "(a"
+                    + str(current_target_id)
+                    + ':Gene { kegg_ids: ["'
+                    + target[1]
+                    + '"]}),'
+                )
+                query += (
+                    "(a"
+                    + str(current_target_id)
+                    + ")-[:Targeted]->(b"
+                    + str(current_drug_id)
+                    + "),"
+                )
                 current_target_id += 1
 
         current_drug_id += 1
