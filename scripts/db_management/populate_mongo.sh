@@ -1,4 +1,5 @@
 #!/bin/bash
+# Pull data from 
 rm *.txt
 rm *.tsv
 rm *.gz
