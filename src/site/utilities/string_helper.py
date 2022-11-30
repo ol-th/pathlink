@@ -8,7 +8,7 @@ def get_functional_network(gene_list):
         "species": 9606,
         "required_score": 750,
         "add_nodes": 10,
-        "show_query_node_labels": 1
+        "show_query_node_labels": 1,
     }
     r = requests.get("https://string-db.org/api/tsv-no-header/network", params=params)
     if r.status_code != 200 or r.text == "" or r.text.lower().startswith("error"):
@@ -58,7 +58,3 @@ def get_relevant_links(gene_list):
                         indirect[gene][other].append(partner)
 
     return direct, indirect
-
-
-
-

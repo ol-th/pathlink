@@ -2,13 +2,17 @@
 
 This is the repository containing my 3rd year project research.
 
+## Video Explanation and Demonstration
+
+[<img src="https://i.ytimg.com/vi/A6rYyVcMX_o/maxresdefault.jpg" width="50%">](https://youtu.be/A6rYyVcMX_o)
+
 ## Motivation
 
 There is a significant amount of cancer data available in different formats and places.
 
 This is fine for manual use but even then it is lengthy to use the data to come to any conclusions.
 
-The purpose of this project is to provide an API and graphical interface which provides quick access to cancer-related bioinformatic data along with other data taken from:
+We need to be able to use data from the following sources in a single place:
 
 * KEGG
 * Pathway Commons
@@ -17,15 +21,17 @@ The purpose of this project is to provide an API and graphical interface which p
 * UniProt
 * STRING
 
-The system also provides an API to produce comprehensive Neo4j representations of all KEGG pathways - along with mechanisms for enrichment and other analysis.
+The purpose of this project is to provide an API and graphical interface to query cancer-related bioinformatic data.
 
 ## Outcomes
 
-The API is a single endpoint that gathers pathway data from multiple sources. It outputs the Cypher queries necessary to produce a comprehensive graph in Neo4j. The outputs look something like this:
+The API and GUI provide many ways to get data on genes, drugs, pathways and their interactions.
+
+Importantly, it can output the Cypher queries necessary to produce a comprehensive pathway graph in Neo4j. The outputs look something like this:
 
 ![Neo4j Graph](images/graph.png)
 
-These graphs have Genes, Drugs and Compounds together with data on how they interact.
+These graphs can then be traversed with algorithms to reason about cancer systems.
 
 ## Structure
 
@@ -43,7 +49,7 @@ For more information about running the system, consult src/README.md
 
 ### `scripts`
 
-This contains any scripts used to test the system as an outsider.
+This contains any scripts used to test the system as a client.
 
 ## Implementation Notes
 
@@ -53,7 +59,9 @@ Some raw datasets need to be pulled into an operational MongoDB database in adva
 * CiViCDB
 * ClinVar
 
-This is because their APIs are either unacceptably slow or inflexible.
+This is because their APIs are either unacceptably slow or don't provide the functionality we need.
+
+The rest of the data comes live from the API endpoints of the respective services.
 
 ## Setup
 
@@ -95,13 +103,13 @@ paste them into the relevant locations.
 - The system has a frontend available via localhost (usually 127.0.0.1/).
 This is a comprehensive interface for simple queries.
   
-- The system also has a total of 7 API endpoints:
+- The API has a total of 7 endpoints (all `GET`):
 
-    - /api/pathway
-    - /api/gene
-    - /api/variant
-    - /api/pathway_gene_interaction
-    - /api/variant_evidence
-    - /api/functional_enrichment
-    - /api/pathway_to_cypher
+    - `/api/pathway` - All data on a pathway identifier / name.
+    - `/api/gene` - All data on a gene identifier / name.
+    - `/api/variant` - All data on a gene variant.
+    - `/api/pathway_gene_interaction` - All interaction data between a gene and pathway. 
+    - `/api/variant_evidence` - All CiViC/ClinVar evidence of a gene variant.
+    - `/api/functional_enrichment` - Get the functional network of a protein.
+    - `/api/pathway_to_cypher` - Get the cypher queries to add a pathway to a Neo4j graph database.
   
